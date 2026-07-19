@@ -1,0 +1,19 @@
+﻿#,Element,Reference Image,Current UI,Action Needed
+1,**Overall chassis**,"Brushed metal gunmetal with chamfered edges, green glow trim",Flat CSS gradients,Major restyle
+2,**R3V4 logo**,"3D metallic green beveled text, large (52px), with glow",Simple text,New component
+3,**R3 NATIVE badge**,"Circular metallic green with black R3, beveled edge",Square div,Redesign
+4,"**""By Dj Ernesto""**","Script/cursive font, gold/yellow",Missing entirely,Add
+5,**Feature icons row**,6 hexagonal icons with labels,Missing entirely,Add
+6,**Knobs**,"3D chamfered metallic with green LED ring, brushed metal cap",Simple canvas arc,Full rewrite
+7,**Knob values**,"Below knob in green, small",Centered on knob,Reposition
+8,**Space visualizer**,"3D wireframe cube with rotating perspective, energy particles",2D room outline,Full rewrite
+9,**Faders**,"Metallic track, green LED fill, silver handle with shadow",Simple div bars,Restyle
+10,**Fader LED segments**,Side-mounted LED indicators per fader,Missing,Add
+11,**Stereo width**,"Horizontal slider with green fill, metallic handle",Missing from mix section,Add
+12,**Status bar meters**,"Segmented LED bars (green→yellow), dB values",Canvas bars,Restyle
+13,**Bottom info panel**,"5 cards: Hall/Room, Size, High Cut, Stereo Width, Presets",Missing entirely,Add
+14,**PRO TIPS bar**,5 cards with icons and descriptions,Single rotating tip,Expand
+15,**Footer**,"Platform icons, format badges, category icons, branding",Missing entirely,Add
+16,**Energy border**,Green waveform energy effects around entire UI,Static top line,Add animated
+17,**Preset nav**,"Arrow buttons with ""HALL GRAND"" display",Dropdown select,Change to arrows
+18,**Power button**,Circular metallic with green ring,Simple button,Restyle

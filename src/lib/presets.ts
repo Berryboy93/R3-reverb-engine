@@ -3,7 +3,7 @@
  * 15 presets: 1 Init + 14 production categories
  */
 
-import { Preset, SpaceMode } from '../types/reverb';
+import { Preset } from '../types/reverb';
 
 export const FACTORY_PRESETS: Preset[] = [
   {

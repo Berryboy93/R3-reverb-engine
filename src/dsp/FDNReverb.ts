@@ -202,7 +202,6 @@ export class FDNReverbEngine {
   private outputLPF: OnePoleLPF;
   private outputHPF: OnePoleHPF;
   private parameters: ReverbParameters;
-  private modPhase = 0;
   private modRate: number;
   private oversampleFactor = 1;
   private oversampleBufferL: Float32Array;
@@ -511,7 +510,6 @@ export class FDNReverbEngine {
     this.outputLPF.clear();
     this.outputHPF.clear();
     this.resetPeaks();
-    this.modPhase = 0;
   }
 
   setSampleRate(sr: number): void {

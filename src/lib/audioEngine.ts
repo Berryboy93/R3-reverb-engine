@@ -76,7 +76,7 @@ export class R3V4AudioEngine {
     });
   }
 
-  setSpaceMode(mode: SpaceMode): void {
+  setSpaceMode(_mode: SpaceMode): void {
     this.setParameters({} as any);
   }
 

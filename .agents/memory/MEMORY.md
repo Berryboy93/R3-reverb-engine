@@ -1,0 +1,2 @@
+- [Vite test runner blocked](replit-vitest-blocked.md) — `vitest` is blocked by Replit security policy in this project.
+- [TS config stale references](tsconfig-stale-references.md) — `tsconfig.json` had `vitest/globals` and an invalid `WebAudio` lib after vitest was removed.

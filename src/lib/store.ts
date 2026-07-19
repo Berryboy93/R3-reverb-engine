@@ -36,6 +36,9 @@ interface R3V4Store {
   setSpaceMode: (mode: SpaceMode) => void;
   loadPreset: (preset: Preset) => void;
   loadPresetByName: (name: string) => void;
+  loadFirstPresetByCategory: (category: string) => void;
+  nextPreset: () => void;
+  previousPreset: () => void;
   saveUserPreset: (name: string, category: string) => void;
   deleteUserPreset: (name: string) => void;
   toggleBypass: () => void;
@@ -111,6 +114,27 @@ export const useR3V4Store = create<R3V4Store>((set, get) => ({
   loadPresetByName: (name) => {
     const preset = getPresetByName(name);
     if (preset) get().loadPreset(preset);
+  },
+
+  loadFirstPresetByCategory: (category) => {
+    const preset = FACTORY_PRESETS.find(p => p.category === category);
+    if (preset) get().loadPreset(preset);
+  },
+
+  nextPreset: () => {
+    const state = get();
+    const all = FACTORY_PRESETS;
+    const idx = all.findIndex(p => p.name === state.presetName);
+    const next = all[(idx + 1) % all.length];
+    state.loadPreset(next);
+  },
+
+  previousPreset: () => {
+    const state = get();
+    const all = FACTORY_PRESETS;
+    const idx = all.findIndex(p => p.name === state.presetName);
+    const prev = all[(idx - 1 + all.length) % all.length];
+    state.loadPreset(prev);
   },
 
   saveUserPreset: (name, category) => {

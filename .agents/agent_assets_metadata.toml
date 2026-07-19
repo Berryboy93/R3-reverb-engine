@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "1p98wYNdeS7ybWNp-qhzs"
+uri = "file://screenshots/r3v4-redesign.jpg"
+type = "image"
+title = "R3V4 Redesigned UI"

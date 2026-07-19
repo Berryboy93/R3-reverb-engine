@@ -1,0 +1,41 @@
+{
+  "name": "r3v4-reverb-engine",
+  "version": "1.0.0",
+  "description": "R3V4 Reverb Engine — Flagship spatial processor of the R3 NATIVE ecosystem",
+  "author": "R3 NATIVE Labs",
+  "license": "Proprietary",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "build:plugin": "tsc && vite build --mode plugin",
+    "build:standalone": "tsc && vite build --mode standalone",
+    "build:all": "npm run build:plugin && npm run build:standalone",
+    "lint": "eslint src --ext .ts,.tsx",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest",
+    "test:ui": "vitest --ui"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "zustand": "^4.5.2",
+    "framer-motion": "^11.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "typescript": "^5.5.3",
+    "vite": "^5.3.3",
+    "vitest": "^1.6.0",
+    "eslint": "^8.57.0",
+    "@typescript-eslint/eslint-plugin": "^7.15.0",
+    "@typescript-eslint/parser": "^7.15.0"
+  },
+  "keywords": [
+    "reverb", "dsp", "audio-plugin", "spatial", "r3-native",
+    "vst3", "au", "aax", "audio-effect", "fdn"
+  ]
+}

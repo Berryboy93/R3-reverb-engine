@@ -54,7 +54,9 @@ const CircuitOverlay: React.FC = () => (
   </svg>
 );
 
-/* ─── Animated energy border ────────────────────────────────────────── */
+/* ─── Animated laser border ─────────────────────────────────────────── */
+// Three-layer HDR render: wide diffuse halo → mid corona → sharp bright core.
+// Corner nodes pulse independently as spark accents.
 const EnergyBorder: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -76,37 +78,85 @@ const EnergyBorder: React.FC = () => {
     resize();
     window.addEventListener('resize', resize);
 
-    const draw = () => {
-      t += 0.018;
-      const w = canvas.width, h = canvas.height;
-      ctx.clearRect(0, 0, w, h);
+    const getPoint = (p: number, w: number, h: number) => {
+      let x = 0, y = 0;
+      if (p < 0.25)      { x = p * 4 * w;           y = 0; }
+      else if (p < 0.5)  { x = w;                    y = (p - 0.25) * 4 * h; }
+      else if (p < 0.75) { x = w - (p - 0.5) * 4 * w; y = h; }
+      else               { x = 0;                    y = h - (p - 0.75) * 4 * h; }
+      // Compound wave for organic laser wobble
+      const wave = Math.sin(p * 20 + t) * 4.5 + Math.sin(p * 7 - t * 0.65) * 2.5;
+      if (p < 0.25)      y += wave;
+      else if (p < 0.5)  x -= wave;
+      else if (p < 0.75) y -= wave;
+      else               x += wave;
+      return { x, y };
+    };
 
-      // outer glow pulse
-      const pulse = 0.5 + 0.5 * Math.sin(t * 1.2);
-      ctx.strokeStyle = `rgba(183,255,0,${0.25 + pulse * 0.2})`;
-      ctx.lineWidth = 2 + pulse;
-      ctx.shadowColor = '#B7FF00';
-      ctx.shadowBlur = 10 + pulse * 14;
+    const tracePath = (pts: number, w: number, h: number) => {
       ctx.beginPath();
-
-      const pts = 60;
       for (let i = 0; i <= pts; i++) {
-        const p = i / pts;
-        let x, y;
-        if (p < 0.25) { x = p * 4 * w; y = 0; }
-        else if (p < 0.5) { x = w; y = (p - 0.25) * 4 * h; }
-        else if (p < 0.75) { x = w - (p - 0.5) * 4 * w; y = h; }
-        else { x = 0; y = h - (p - 0.75) * 4 * h; }
-        const wave = Math.sin(p * 22 + t) * 3.5 + Math.sin(p * 9 - t * 0.6) * 2;
-        if (p < 0.25) y += wave;
-        else if (p < 0.5) x -= wave;
-        else if (p < 0.75) y -= wave;
-        else x += wave;
+        const { x, y } = getPoint(i / pts, w, h);
         i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
       }
       ctx.closePath();
+    };
+
+    const draw = () => {
+      t += 0.022;
+      const w = canvas.width, h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+
+      const pulse = 0.5 + 0.5 * Math.sin(t * 1.1);
+      const pts = 80;
+
+      // Layer 1 — wide diffuse halo
+      tracePath(pts, w, h);
+      ctx.strokeStyle = `rgba(183,255,0,${0.06 + pulse * 0.05})`;
+      ctx.lineWidth = 20;
+      ctx.lineCap = 'round';
+      ctx.shadowColor = '#B7FF00';
+      ctx.shadowBlur = 22;
+      ctx.stroke();
+
+      // Layer 2 — mid corona
+      tracePath(pts, w, h);
+      ctx.strokeStyle = `rgba(183,255,0,${0.18 + pulse * 0.10})`;
+      ctx.lineWidth = 5;
+      ctx.shadowBlur = 10;
+      ctx.stroke();
+
+      // Layer 3 — sharp bright laser core
+      tracePath(pts, w, h);
+      ctx.strokeStyle = `rgba(215,255,100,${0.70 + pulse * 0.28})`;
+      ctx.lineWidth = 1.4;
+      ctx.shadowColor = '#D7FF64';
+      ctx.shadowBlur = 5;
       ctx.stroke();
       ctx.shadowBlur = 0;
+
+      // Corner spark nodes — each pulses at a different phase
+      const corners = [
+        { x: 0, y: 0 }, { x: w, y: 0 },
+        { x: w, y: h }, { x: 0, y: h },
+      ];
+      corners.forEach(({ x, y }, i) => {
+        const sp = 0.5 + 0.5 * Math.sin(t * 2.2 + i * Math.PI * 0.5);
+        // Outer diffuse spark
+        ctx.beginPath();
+        ctx.arc(x, y, 6 + sp * 8, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(183,255,0,${0.05 + sp * 0.08})`;
+        ctx.fill();
+        // Bright node core
+        ctx.beginPath();
+        ctx.arc(x, y, 2 + sp * 2.5, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(220,255,120,${0.55 + sp * 0.42})`;
+        ctx.shadowColor = '#B7FF00';
+        ctx.shadowBlur = 8 + sp * 14;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      });
+
       animId = requestAnimationFrame(draw);
     };
     draw();

@@ -239,6 +239,8 @@ export const Knob: React.FC<KnobProps> = ({ value, range, label, onChange, size 
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, userSelect: 'none' }}>
       <canvas
         ref={canvasRef}
+        data-testid="knob-canvas"
+        aria-label={`${label} knob`}
         style={{ width: size, height: size, cursor: dragging ? 'grabbing' : 'grab', display: 'block', touchAction: 'none' }}
         onPointerDown={handlePointerDown}
         onMouseEnter={() => setHovered(true)}

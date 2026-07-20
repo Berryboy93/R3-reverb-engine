@@ -209,7 +209,9 @@ export const R3V4Plugin: React.FC = () => {
   // Whether the user has previously consented to audio (persisted in localStorage)
   const [hasStoredConsent] = useState(() => localStorage.getItem(AUDIO_CONSENT_KEY) === '1');
   const [audioStatus, setAudioStatus] = useState('Audio off');
-  const [inputSource, setInputSource] = useState<InputSource>('test-tone');
+  const [inputSource, setInputSource] = useState<InputSource>(
+    () => (localStorage.getItem('r3v4-input-source') as InputSource | null) ?? 'test-tone'
+  );
   const [presetDisplay, setPresetDisplay] = useState('');
   const [asiPulse, setAsiPulse] = useState(false);
 
@@ -358,6 +360,7 @@ export const R3V4Plugin: React.FC = () => {
 
   const changeInputSource = async (source: InputSource) => {
     setInputSource(source);
+    localStorage.setItem('r3v4-input-source', source);
     const e = engineRef.current;
     if (!e) return;
     if (e.initialized) {
@@ -365,6 +368,7 @@ export const R3V4Plugin: React.FC = () => {
       // Engine may fall back to test tone when the mic is denied — reflect reality.
       const actual = e.getInputSource();
       setInputSource(actual);
+      localStorage.setItem('r3v4-input-source', actual);
       setAudioStatus(actual === 'mic' ? 'Microphone' : (source === 'mic' ? 'Mic denied — test tone' : 'Test Tone'));
     }
   };

@@ -12,7 +12,9 @@
 import { ReverbParameters } from '../types/reverb';
 
 const FDN_SIZE = 8;
-const MAX_DELAY_SAMPLES = 48000 * 3;
+// MUST be a power of two — read()/write() index with a bitmask (& MAX-1).
+// Max needed: 79.9ms base × 2.3 size factor at 96kHz (2× oversampled) ≈ 17.7k samples.
+const MAX_DELAY_SAMPLES = 32768;
 const ALLPASS_STAGES = 4;
 const MOD_LFO_RATE = 0.5;
 const MOD_DEPTH_MS = 0.5;
@@ -34,11 +36,14 @@ class AllpassFilter {
   }
 
   process(input: number, coeff: number): number {
+    // Schroeder allpass lattice: w[n] = x[n] + c·w[n−N]; y[n] = −c·w[n] + w[n−N].
+    // (Using x instead of w in the output tap breaks the allpass property and
+    // turns the filter into a >1-gain amplifier — instant feedback blow-up.)
     const delayed = this.buffer[this.index];
-    const output = -coeff * input + delayed;
-    this.buffer[this.index] = input + coeff * delayed;
+    const w = input + coeff * delayed;
+    this.buffer[this.index] = w;
     this.index = (this.index + 1) % this.buffer.length;
-    return output;
+    return -coeff * w + delayed;
   }
 
   setDelayMs(sampleRate: number, delayMs: number): void {
@@ -215,6 +220,12 @@ export class FDNReverbEngine {
   private freezeBufferR: Float32Array | null = null;
   private freezeIndex = 0;
   private hadamard: number[][];
+  // Persistent pre-delay ring buffers (max 500ms at 96kHz = 48000 samples).
+  // CRITICAL: these must survive across process() blocks — allocating them
+  // per-block silently discards all delayed audio when preDelay > blockSize.
+  private preDelayBufL = new Float32Array(65536);
+  private preDelayBufR = new Float32Array(65536);
+  private preDelayIdx = 0;
 
   constructor(sampleRate: number, maxBlockSize = 2048) {
     this.sampleRate = sampleRate;
@@ -361,9 +372,16 @@ export class FDNReverbEngine {
   ): void {
     const { parameters } = this;
 
-    // FIXED: Clamp decay to prevent division by zero
+    // FIXED: Clamp decay to prevent division by zero.
+    // Feedback gain must scale with each line's loop time (RT60 definition):
+    // gain_i = 0.001^(delayTime_i / decaySeconds), applied once per loop pass.
+    // (A per-sample factor applied per pass gives a wildly wrong decay time.)
     const safeDecay = Math.max(MIN_DECAY, parameters.decay);
-    const decayFactor = Math.pow(0.001, 1 / (safeDecay * sr));
+    const lineGains: number[] = new Array(FDN_SIZE);
+    for (let i = 0; i < FDN_SIZE; i++) {
+      const delaySec = this.delayLines[i].delaySamples / sr;
+      lineGains[i] = Math.pow(0.001, delaySec / safeDecay);
+    }
 
     const dryGain = parameters.dry / 100;
     const erGain = parameters.er / 100;
@@ -373,11 +391,8 @@ export class FDNReverbEngine {
     const crosstalk = parameters.crosstalk / 100;
     const erAmount = parameters.earlyReflections / 100;
     const bassDamp = parameters.bassDamping / 100;
-    const preDelaySamples = Math.round((parameters.preDelay / 1000) * sr);
-
-    const preDelayBufL = new Float32Array(preDelaySamples + 1);
-    const preDelayBufR = new Float32Array(preDelaySamples + 1);
-    let preDelayIdx = 0;
+    const pdLen = this.preDelayBufL.length;
+    const preDelaySamples = Math.min(pdLen - 1, Math.round((parameters.preDelay / 1000) * sr));
 
     for (let n = 0; n < numSamples; n++) {
       let inL = inputL[n] || 0;
@@ -386,11 +401,13 @@ export class FDNReverbEngine {
       this.peakInputL = Math.max(this.peakInputL * 0.999, Math.abs(inL));
       this.peakInputR = Math.max(this.peakInputR * 0.999, Math.abs(inR));
 
-      const delayedInL = preDelayBufL[preDelayIdx];
-      const delayedInR = preDelayBufR[preDelayIdx];
-      preDelayBufL[preDelayIdx] = inL;
-      preDelayBufR[preDelayIdx] = inR;
-      preDelayIdx = (preDelayIdx + 1) % (preDelaySamples + 1);
+      // Write current sample, then read preDelaySamples behind the write head.
+      this.preDelayBufL[this.preDelayIdx] = inL;
+      this.preDelayBufR[this.preDelayIdx] = inR;
+      const readIdx = (this.preDelayIdx - preDelaySamples + pdLen) % pdLen;
+      const delayedInL = this.preDelayBufL[readIdx];
+      const delayedInR = this.preDelayBufR[readIdx];
+      this.preDelayIdx = (this.preDelayIdx + 1) % pdLen;
 
       const monoIn = (delayedInL + delayedInR) * 0.5;
       const filteredIn = this.inputHPF.process(monoIn);
@@ -425,7 +442,7 @@ export class FDNReverbEngine {
         for (let j = 0; j < FDN_SIZE; j++) {
           feedbackOutputs[i] += this.hadamard[i][j] * delayOutputs[j];
         }
-        feedbackOutputs[i] *= decayFactor;
+        feedbackOutputs[i] *= lineGains[i];
       }
 
       for (let i = 0; i < FDN_SIZE; i++) {
@@ -505,6 +522,9 @@ export class FDNReverbEngine {
 
   clear(): void {
     for (const line of this.delayLines) line.clear();
+    this.preDelayBufL.fill(0);
+    this.preDelayBufR.fill(0);
+    this.preDelayIdx = 0;
     this.earlyReflections.clear();
     this.inputHPF.clear();
     this.outputLPF.clear();

@@ -29,6 +29,12 @@ Before running this command, confirm visually in the browser that:
 
 > Updating snapshots without a visual check defeats the purpose of the test.
 
+#### Snapshots are never updated in CI
+
+The `test` script passes Jest's `--ci` flag, so CI runs **fail** on a
+snapshot mismatch instead of silently writing a new snapshot. Running
+`--updateSnapshot` is a deliberate, local-only step — never pass it in CI.
+
 #### Making diffs readable
 
 The named constants at the top of `src/ui/components/Knob.tsx`

@@ -15,7 +15,7 @@
     "build:processor": "esbuild src/dsp/R3V4Processor.ts --bundle --outfile=public/r3v4-processor.js --format=esm --target=es2020 --minify",
     "lint": "eslint src --ext .ts,.tsx",
     "typecheck": "tsc --noEmit",
-    "test": "jest --no-coverage",
+    "test": "jest --ci --no-coverage",
     "test:ui": "jest --no-coverage --verbose",
     "test:e2e": "playwright test"
   },

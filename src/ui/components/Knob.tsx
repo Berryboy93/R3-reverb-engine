@@ -3,8 +3,7 @@ import { ParameterRange } from '../../types/reverb';
 
 const NEON = '#B7FF00';
 const CHROME_HI = '#f0f0f0';
-const CHROME_MID = '#888';
-const CHROME_LO = '#1a1a1a';
+
 
 interface KnobProps {
   value: number;

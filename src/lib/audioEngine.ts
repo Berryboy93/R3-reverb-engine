@@ -17,8 +17,19 @@ export class R3V4AudioEngine {
   private isInitialized = false;
   private pendingParams: Partial<ReverbParameters> = {};
   private onMetricsCallback: ((metrics: any) => void) | null = null;
+  private onStateChangeCallback: ((state: AudioContextState) => void) | null = null;
   private inputSource: InputSource = 'test-tone';
   private currentStream: MediaStream | null = null;
+
+  /**
+   * Register a callback invoked whenever the AudioContext state changes.
+   * Fires on both 'suspended' and 'running' transitions, so callers can
+   * react to browsers that silently suspend a context post-initialization
+   * (common in Firefox / older Safari under strict autoplay policies).
+   */
+  onStateChange(callback: (state: AudioContextState) => void): void {
+    this.onStateChangeCallback = callback;
+  }
 
   async initialize(inputSource: InputSource = 'test-tone'): Promise<boolean> {
     if (this.isInitialized) {
@@ -30,7 +41,18 @@ export class R3V4AudioEngine {
     try {
       this.inputSource = inputSource;
       this.audioContext = new AudioContext({ sampleRate: 48000, latencyHint: 'interactive' });
+
+      // Call resume() immediately — before any await — to consume the user-gesture
+      // token while it is still valid.  Some browsers (Firefox, older Safari) report
+      // state === 'running' right away yet still gate audio until an explicit resume()
+      // inside a gesture handler; calling it first guarantees we are inside the gesture.
       await this.audioContext.resume();
+
+      // Wire statechange so the UI can react to browsers that silently suspend
+      // the context after initialization (e.g. tab is backgrounded, power-save mode).
+      this.audioContext.addEventListener('statechange', () => {
+        this.onStateChangeCallback?.(this.audioContext!.state);
+      });
 
       const processorCode = await fetch('/r3v4-processor.js').then(r => r.text());
       const blob = new Blob([processorCode], { type: 'application/javascript' });

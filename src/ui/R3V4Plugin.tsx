@@ -208,7 +208,26 @@ export const R3V4Plugin: React.FC = () => {
       setOutputLevel(m.peakOutputL || 0);
       setCpuUsage(m.cpuLoad || 0);
     });
+    // React to browser-driven state transitions (e.g. tab backgrounded, power-save,
+    // or the Firefox/Safari quirk where state is 'running' but audio is still gated
+    // and then transitions to 'suspended' before the first real sample plays).
+    engine.onStateChange((state) => {
+      const running = state === 'running';
+      setAudioEnabled(running);
+      if (!running) {
+        // Context was suspended outside our control — show the unlock banner again
+        // so the user knows a click is required to resume.
+        setNeedsFirstGesture(true);
+        setAudioStatus('Suspended — click to enable');
+        store.setProcessing(false);
+      } else {
+        setNeedsFirstGesture(false);
+        setAudioStatus(engine.getInputSource() === 'mic' ? 'Microphone' : 'Test Tone');
+        store.setProcessing(true);
+      }
+    });
     return () => engine.close();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

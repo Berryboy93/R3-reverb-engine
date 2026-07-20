@@ -10,518 +10,38 @@ import { SpaceCube } from './components/SpaceCube';
 import { StereoWidthSlider } from './components/StereoWidthSlider';
 
 const NEON = R3V4_COLORS.neonNativeGreen;
+const GOLD = '#D4AF37';
 
-const TIPS = [
-  { title: 'Pre-Delay', body: 'Preserves attack transients while adding space. Increase for vocals.', icon: '⏱' },
-  { title: 'EQ the Reverb', body: 'High-pass and low-pass the reverb return to maintain mix clarity.', icon: '≃' },
-  { title: 'Parallel Reverb', body: 'Blend ambience using auxiliary buses for maximum control.', icon: '∿' },
-  { title: 'Short Decays', body: 'Improve clarity for drums and rhythm instruments.', icon: '🥁' },
-  { title: 'Long Decays', body: 'Create cinematic textures and atmospheric pads.', icon: '🎬' },
-];
+/* ─── Glass panel helper ───────────────────────────────────────────── */
+const glass = (alpha = 0.55, blur = 8): React.CSSProperties => ({
+  background: `rgba(12,12,12,${alpha})`,
+  backdropFilter: `blur(${blur}px) saturate(1.4)`,
+  WebkitBackdropFilter: `blur(${blur}px) saturate(1.4)`,
+});
 
-const FEATURES = [
-  { icon: 'AI', label: 'Smart AI' },
-  { icon: '3D', label: 'Spatial' },
-  { icon: 'FDN', label: '8×8 Matrix' },
-  { icon: '2x', label: 'Oversample' },
-  { icon: 'RT', label: 'Real-Time' },
-  { icon: 'LOW', label: 'Low CPU' },
-];
-
-const CATEGORIES = [
-  { key: 'Drums', label: 'Drums', icon: '🥁' },
-  { key: 'Keys', label: 'Keys', icon: '🎹' },
-  { key: 'Vocals', label: 'Vocals', icon: '🎤' },
-  { key: 'Master Bus', label: 'Buss', icon: '🔊' },
-  { key: 'Master', label: 'Master', icon: 'M' },
-];
-
-const FORMATS = ['VST3', 'AU', 'AAX', 'STANDALONE', 'WEB'];
-const PLATFORMS = ['LINUX', 'WINDOWS', 'macOS'];
-
-const SectionLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <span style={{ fontSize: 9, color: '#555', textTransform: 'uppercase', letterSpacing: 2, fontWeight: 700 }}>{children}</span>
+/* ─── ASI circuit trace overlay (SVG pattern) ──────────────────────── */
+const CircuitOverlay: React.FC = () => (
+  <svg
+    style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', opacity: 0.045, zIndex: 0 }}
+    preserveAspectRatio="xMidYMid slice"
+  >
+    <defs>
+      <pattern id="circuit" x="0" y="0" width="80" height="80" patternUnits="userSpaceOnUse">
+        <path d="M10 10 H40 V30 H70" stroke="#B7FF00" strokeWidth="0.8" fill="none"/>
+        <path d="M40 10 V60 H60 V70" stroke="#B7FF00" strokeWidth="0.8" fill="none"/>
+        <path d="M0 50 H20 V40 H50" stroke="#B7FF00" strokeWidth="0.8" fill="none"/>
+        <circle cx="40" cy="30" r="2" fill="#B7FF00"/>
+        <circle cx="20" cy="40" r="1.5" fill="#B7FF00"/>
+        <circle cx="60" cy="70" r="2" fill="#B7FF00"/>
+        <rect x="8" y="8" width="4" height="4" rx="1" fill="none" stroke="#B7FF00" strokeWidth="0.6"/>
+        <rect x="68" y="28" width="4" height="4" rx="1" fill="none" stroke="#B7FF00" strokeWidth="0.6"/>
+      </pattern>
+    </defs>
+    <rect width="100%" height="100%" fill="url(#circuit)"/>
+  </svg>
 );
 
-const InfoCard: React.FC<{ title: string; value: string; sub?: string }> = ({ title, value, sub }) => (
-  <div style={{
-    background: 'rgba(26,26,26,0.75)', border: '1px solid #222',
-    borderRadius: 6, padding: '8px 12px', display: 'flex', flexDirection: 'column', gap: 1, minWidth: 80,
-  }}>
-    <span style={{ fontSize: 8, color: '#555', textTransform: 'uppercase', letterSpacing: 1 }}>{title}</span>
-    <span style={{ fontSize: 12, color: NEON, fontWeight: 700 }}>{value}</span>
-    {sub && <span style={{ fontSize: 8, color: '#666' }}>{sub}</span>}
-  </div>
-);
-
-const HexBadge: React.FC<{ label: string; icon: string }> = ({ label, icon }) => (
-  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
-    <div style={{
-      width: 34, height: 34,
-      background: 'linear-gradient(135deg, #1a1a1a, #0f0f0f)',
-      border: '1px solid #333',
-      clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      boxShadow: '0 0 8px rgba(183,255,0,0.1)',
-    }}>
-      <span style={{ fontSize: 10, color: NEON, fontWeight: 800 }}>{icon}</span>
-    </div>
-    <span style={{ fontSize: 8, color: '#777', textTransform: 'uppercase', letterSpacing: 1 }}>{label}</span>
-  </div>
-);
-
-const HeaderButton: React.FC<{ label: string; children: React.ReactNode; onClick?: () => void; disabled?: boolean; style?: React.CSSProperties }> =
-  ({ label, children, onClick, disabled, style }) => (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
-      <span style={{ fontSize: 8, color: '#555', textTransform: 'uppercase', letterSpacing: 1 }}>{label}</span>
-      <button onClick={onClick} disabled={disabled} style={style}>{children}</button>
-    </div>
-  );
-
-export const R3V4Plugin: React.FC = () => {
-  const store = useR3V4Store();
-  const engineRef = useRef<R3V4AudioEngine | null>(null);
-  const [tipIndex, setTipIndex] = useState(0);
-  const [inputLevel, setInputLevel] = useState(0);
-  const [outputLevel, setOutputLevel] = useState(0);
-  const [cpuUsage, setCpuUsage] = useState(0);
-  const [audioEnabled, setAudioEnabled] = useState(false);
-  const [audioStatus, setAudioStatus] = useState('Audio off');
-  const [inputSource, setInputSource] = useState<InputSource>('test-tone');
-  const [presetDisplay, setPresetDisplay] = useState(store.spaceMode.toUpperCase() + ' — ' + store.presetName.split('—').pop()?.trim());
-
-  useEffect(() => {
-    const engine = new R3V4AudioEngine();
-    engineRef.current = engine;
-    engine.onMetrics((metrics) => {
-      setInputLevel(metrics.peakInputL || 0);
-      setOutputLevel(metrics.peakOutputL || 0);
-      setCpuUsage(metrics.cpuLoad || 0);
-    });
-    return () => engine.close();
-  }, []);
-
-  const enableAudio = async () => {
-    const engine = engineRef.current;
-    if (!engine) return;
-    const ok = await engine.initialize(inputSource);
-    if (ok) {
-      setAudioEnabled(true);
-      setAudioStatus(inputSource === 'mic' ? 'Microphone input' : 'Test tone input');
-    } else {
-      setAudioStatus('Audio failed');
-    }
-  };
-
-  const toggleAudio = async () => {
-    const engine = engineRef.current;
-    if (!engine) return;
-    if (!engine.initialized) {
-      await enableAudio();
-      return;
-    }
-    engine.toggle();
-    const running = engine.isRunning;
-    setAudioEnabled(running);
-    setAudioStatus(running ? (inputSource === 'mic' ? 'Microphone input' : 'Test tone input') : 'Audio paused');
-  };
-
-  const changeInputSource = async (source: InputSource) => {
-    setInputSource(source);
-    const engine = engineRef.current;
-    if (!engine) return;
-    if (engine.initialized) {
-      await engine.setInputSource(source);
-      setAudioStatus(source === 'mic' ? 'Microphone input' : 'Test tone input');
-    }
-  };
-
-  useEffect(() => {
-    engineRef.current?.setParameters(store.parameters);
-  }, [store.parameters]);
-
-  useEffect(() => {
-    const name = store.presetName.split('—').pop()?.trim() || store.presetName;
-    setPresetDisplay(`${store.spaceMode.toUpperCase()} ${name.toUpperCase()}`);
-  }, [store.presetName, store.spaceMode]);
-
-  useEffect(() => {
-    const interval = setInterval(() => setTipIndex(i => (i + 1) % TIPS.length), 8000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const handleParamChange = useCallback((param: string, value: number | boolean) => {
-    store.setParameter(param as any, value);
-  }, [store]);
-
-  const allPresets = useMemo(() => [...FACTORY_PRESETS, ...store.userPresets], [store.userPresets]);
-
-  const handlePresetChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    store.loadPresetByName(e.target.value);
-  };
-
-  const btnStyle = (active: boolean): React.CSSProperties => ({
-    background: 'linear-gradient(180deg, #1a1a1a, #111)', border: `1px solid ${active ? '#444' : '#222'}`,
-    color: active ? '#aaa' : '#555', padding: '4px 10px', borderRadius: 5, fontSize: 9,
-    cursor: active ? 'pointer' : 'not-allowed', letterSpacing: 1, transition: 'all 0.2s',
-  });
-
-  const knobRows = [
-    ['preDelay', 'Pre-Delay'], ['decay', 'Decay'], ['size', 'Size'], ['diffusion', 'Diffusion'],
-    ['damping', 'Damping'], ['highCut', 'High Cut'], ['lowCut', 'Low Cut'], ['bassDamping', 'Bass Damp'],
-    ['earlyReflections', 'Early Ref'], ['crosstalk', 'Crosstalk'], ['modulation', 'Modulation'], ['stereoWidth', 'Width'],
-  ] as const;
-
-  return (
-    <div style={{
-      fontFamily: 'system-ui, -apple-system, sans-serif',
-      color: R3V4_COLORS.titaniumSilver,
-      width: '100%', maxWidth: 1020, margin: '0 auto',
-      borderRadius: 14, overflow: 'hidden',
-      backgroundImage: 'linear-gradient(135deg, rgba(17,17,17,0.88) 0%, rgba(10,10,10,0.92) 50%, rgba(17,17,17,0.88) 100%), url(/skin-texture.png)',
-      backgroundSize: 'cover, cover',
-      backgroundPosition: 'center, center',
-      backgroundBlendMode: 'normal, multiply',
-      border: '1px solid #333',
-      boxShadow: '0 0 50px rgba(183,255,0,0.06), inset 0 0 70px rgba(0,0,0,0.8)',
-      position: 'relative',
-      opacity: store.isProcessing ? 1 : 0.45,
-      transition: 'opacity 0.3s',
-    }}>
-      <EnergyBorder />
-
-      {/* HEADER */}
-      <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '8px 20px',
-        background: 'linear-gradient(90deg, rgba(13,13,13,0.92), rgba(22,22,22,0.92), rgba(13,13,13,0.92))',
-        borderBottom: '1px solid #222',
-        position: 'relative',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{
-            width: 38, height: 38, borderRadius: '50%',
-            background: 'radial-gradient(circle at 30% 30%, #c8ff33, #8acc00)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 0 16px rgba(183,255,0,0.4), inset 0 0 6px rgba(0,0,0,0.3)',
-            border: '2px solid #444',
-          }}>
-            <span style={{ fontSize: 13, fontWeight: 900, color: '#080808', letterSpacing: -1 }}>R3</span>
-          </div>
-
-          <div>
-            <div style={{
-              fontSize: 22, fontWeight: 900, color: NEON, letterSpacing: 3,
-              textShadow: '0 0 10px rgba(183,255,0,0.5), 0 2px 0 #333',
-              WebkitTextStroke: '1px rgba(255,255,255,0.1)',
-            }}>R3V4</div>
-            <div style={{ fontSize: 9, color: '#666', letterSpacing: 3, fontWeight: 600 }}>REVERB ENGINE v1.0</div>
-          </div>
-
-          <div style={{
-            fontFamily: "'Brush Script MT', 'Dancing Script', cursive",
-            fontSize: 18, color: '#D4AF37', fontStyle: 'italic',
-            textShadow: '0 0 6px rgba(212,175,55,0.3)',
-            marginLeft: 10,
-          }}>By Dj Ernesto</div>
-        </div>
-
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-          {FEATURES.map(f => <HexBadge key={f.label} icon={f.icon} label={f.label} />)}
-        </div>
-
-        <div style={{ display: 'flex', gap: 12, alignItems: 'end' }}>
-          <HeaderButton label="Undo" onClick={store.undo} disabled={store.historyIndex <= 0} style={btnStyle(store.historyIndex > 0)}>↶</HeaderButton>
-          <HeaderButton label="Redo" onClick={store.redo} disabled={store.historyIndex >= store.history.length - 1} style={btnStyle(store.historyIndex < store.history.length - 1)}>↷</HeaderButton>
-          <HeaderButton label="A / B" onClick={() => store.activeAB === 'A' ? store.captureStateA() : store.captureStateB()}
-            style={{ ...btnStyle(true), borderColor: NEON, color: NEON }}>A/B</HeaderButton>
-
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
-            <span style={{ fontSize: 8, color: '#555', textTransform: 'uppercase', letterSpacing: 1 }}>Input</span>
-            <select
-              value={inputSource}
-              onChange={(e) => changeInputSource(e.target.value as InputSource)}
-              style={{
-                background: '#111', border: '1px solid #222', color: '#aaa', padding: '4px 8px',
-                borderRadius: 5, fontSize: 9, cursor: 'pointer',
-              }}>
-              <option value="test-tone">Test Tone</option>
-              <option value="mic">Microphone</option>
-            </select>
-          </div>
-
-          <HeaderButton label="Audio" onClick={toggleAudio}
-            style={{
-              padding: '6px 12px', borderRadius: 5, fontSize: 9, fontWeight: 700, letterSpacing: 1,
-              cursor: 'pointer', border: '1px solid #444',
-              background: audioEnabled ? 'radial-gradient(circle at 30% 30%, #c8ff33, #6aa800)' : '#222',
-              color: audioEnabled ? '#080808' : '#aaa',
-              boxShadow: audioEnabled ? '0 0 12px rgba(183,255,0,0.4)' : 'none',
-              transition: 'all 0.2s', minWidth: 90,
-            }}>{audioEnabled ? 'ON' : 'ENABLE'}</HeaderButton>
-
-          <HeaderButton label="Power" onClick={store.togglePower}
-            style={{
-              width: 34, height: 34, borderRadius: '50%',
-              background: store.isProcessing ? 'radial-gradient(circle at 30% 30%, #c8ff33, #6aa800)' : '#222',
-              border: '2px solid #444', color: store.isProcessing ? '#080808' : '#555',
-              fontSize: 15, cursor: 'pointer',
-              boxShadow: store.isProcessing ? '0 0 20px rgba(183,255,0,0.5)' : 'inset 0 0 8px rgba(0,0,0,0.8)',
-              transition: 'all 0.2s',
-            }}>⏻</HeaderButton>
-        </div>
-      </div>
-
-      {/* PRESET BAR */}
-      <div style={{ display: 'flex', alignItems: 'end', gap: 10, padding: '6px 20px', background: 'rgba(10,10,10,0.92)', borderBottom: '1px solid #1a1a1a' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-          <SectionLabel>Preset</SectionLabel>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <button onClick={store.previousPreset} style={{ ...btnStyle(true), padding: '4px 8px', fontSize: 12 }}>◀</button>
-            <div style={{
-              flex: 1, maxWidth: 280, textAlign: 'center', padding: '6px 14px', borderRadius: 5,
-              background: 'linear-gradient(90deg, #111, #1a1a1a, #111)', border: '1px solid #333',
-              fontSize: 12, color: NEON, fontWeight: 700, letterSpacing: 2,
-              boxShadow: 'inset 0 0 8px rgba(0,0,0,0.8), 0 0 6px rgba(183,255,0,0.05)',
-            }}>{presetDisplay}</div>
-            <button onClick={store.nextPreset} style={{ ...btnStyle(true), padding: '4px 8px', fontSize: 12 }}>▶</button>
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 3, flex: 1, maxWidth: 200 }}>
-          <SectionLabel>Library</SectionLabel>
-          <select value={store.presetName} onChange={handlePresetChange}
-            style={{ background: '#111', border: '1px solid #222', color: '#aaa', padding: '4px 10px', borderRadius: 5, fontSize: 10, width: '100%' }}>
-            {allPresets.map(p => <option key={p.name} value={p.name}>{p.name}</option>)}
-          </select>
-        </div>
-
-        <HeaderButton label="Save" onClick={() => store.saveUserPreset(`Custom ${Date.now()}`, 'User')} style={btnStyle(true)}>💾</HeaderButton>
-        <HeaderButton label="Random" onClick={store.randomize} style={btnStyle(true)}>🎲</HeaderButton>
-      </div>
-
-      {/* MAIN BODY */}
-      <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', minHeight: 360, background: 'transparent' }}>
-        {/* LEFT PANEL */}
-        <div style={{ padding: 10, display: 'flex', flexDirection: 'column', gap: 6, borderRight: '1px solid #1a1a1a', background: 'rgba(13,13,13,0.5)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: 10, color: NEON, textTransform: 'uppercase', letterSpacing: 2, fontWeight: 700 }}>Space Visualizer</span>
-            <span style={{ fontSize: 10, color: '#666' }}>{store.spaceMode.toUpperCase()}</span>
-          </div>
-          <SpaceCube size={store.parameters.size} decay={store.parameters.decay} />
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 4 }}>
-            {SPACE_MODES.map(mode => (
-              <button key={mode} onClick={() => store.setSpaceMode(mode as SpaceMode)}
-                style={{
-                  background: store.spaceMode === mode ? 'rgba(26,26,26,0.85)' : 'rgba(13,13,13,0.85)',
-                  border: `1px solid ${store.spaceMode === mode ? NEON : '#222'}`,
-                  color: store.spaceMode === mode ? NEON : '#666',
-                  padding: '6px 0', borderRadius: 5, fontSize: 8, cursor: 'pointer', letterSpacing: 1,
-                  boxShadow: store.spaceMode === mode ? '0 0 8px rgba(183,255,0,0.1)' : 'none',
-                }}>
-                {mode.toUpperCase()}
-              </button>
-            ))}
-          </div>
-
-          <button onClick={() => {}}
-            style={{
-              background: 'linear-gradient(90deg, rgba(17,17,17,0.85), rgba(15,26,0,0.85))',
-              border: `1px solid ${NEON}`, color: NEON,
-              padding: 10, borderRadius: 6, fontSize: 10, cursor: 'pointer', letterSpacing: 2,
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-              boxShadow: '0 0 12px rgba(183,255,0,0.08)',
-            }}>
-            <span style={{ fontSize: 13 }}>✦</span> AI SMART MODE
-          </button>
-        </div>
-
-        {/* RIGHT PANEL */}
-        <div style={{ padding: 10, display: 'flex', flexDirection: 'column', gap: 8, background: 'rgba(13,13,13,0.5)' }}>
-          {/* 12 knobs */}
-          <div style={{
-            display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px 6px',
-            padding: 14, background: 'rgba(17,17,17,0.65)', borderRadius: 10,
-            border: '1px solid #1a1a1a',
-          }}>
-            {knobRows.map(([param, label]) => (
-              <Knob key={param}
-                value={store.parameters[param as keyof typeof store.parameters] as number}
-                range={PARAMETER_RANGES[param]}
-                label={label}
-                onChange={(v) => handleParamChange(param, v)}
-                size={52}
-              />
-            ))}
-          </div>
-
-          {/* Mix section: faders + stereo width */}
-          <div style={{
-            display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1.5fr', gap: 16,
-            padding: 14, background: 'rgba(17,17,17,0.65)', borderRadius: 10,
-            border: '1px solid #1a1a1a', alignItems: 'end',
-          }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'center' }}>
-              <SectionLabel>Direct</SectionLabel>
-              <Fader value={store.parameters.dry} label="DRY" onChange={(v) => handleParamChange('dry', v)} />
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'center' }}>
-              <SectionLabel>Early</SectionLabel>
-              <Fader value={store.parameters.er} label="ER" onChange={(v) => handleParamChange('er', v)} />
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'center' }}>
-              <SectionLabel>Reverb</SectionLabel>
-              <Fader value={store.parameters.wet} label="WET" onChange={(v) => handleParamChange('wet', v)} />
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, justifyContent: 'end' }}>
-              <SectionLabel>Imaging</SectionLabel>
-              <StereoWidthSlider value={store.parameters.stereoWidth} min={0} max={200}
-                onChange={(v) => handleParamChange('stereoWidth', v)} />
-            </div>
-          </div>
-
-          {/* Toggle buttons */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <SectionLabel>Global Switches</SectionLabel>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
-              {[
-                { param: 'freeze', icon: '❄️', label: 'Freeze', sub: 'Infinite' },
-                { param: 'ducking', icon: '🔽', label: 'Ducking', sub: 'Auto-lower' },
-                { param: 'tempoSync', icon: '⏱️', label: 'Tempo Sync', sub: 'BPM Lock' },
-                { param: 'oversampling', icon: '🔬', label: 'Oversample', sub: '2x' },
-              ].map(({ param, icon, label, sub }) => {
-                const active = store.parameters[param as keyof typeof store.parameters] as boolean;
-                return (
-                  <button key={param}
-                    onClick={() => handleParamChange(param, !active)}
-                    style={{
-                      background: active ? 'linear-gradient(180deg, rgba(26,26,26,0.85), rgba(15,26,0,0.85))' : 'linear-gradient(180deg, rgba(17,17,17,0.85), rgba(10,10,10,0.85))',
-                      border: `1px solid ${active ? NEON : '#222'}`,
-                      color: active ? NEON : '#666',
-                      padding: 10, borderRadius: 6, fontSize: 10, cursor: 'pointer',
-                      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
-                      boxShadow: active ? '0 0 10px rgba(183,255,0,0.1)' : 'none',
-                    }}>
-                    <span style={{ fontSize: 14 }}>{icon}</span>
-                    <span>{label}</span>
-                    <span style={{ fontSize: 8, color: '#444' }}>{sub}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* BOTTOM INFO PANEL */}
-      <div style={{
-        display: 'flex', gap: 8, padding: '6px 20px', background: 'rgba(10,10,10,0.82)', borderTop: '1px solid #1a1a1a',
-        overflowX: 'auto',
-      }}>
-        <InfoCard title="Space" value={store.spaceMode.toUpperCase()} sub={store.presetName} />
-        <InfoCard title="Size" value={`${Math.round(store.parameters.size)}%`} sub="Room dimensions" />
-        <InfoCard title="High Cut" value={PARAMETER_RANGES.highCut.displayFormat(store.parameters.highCut)} sub="Reverb tail LPF" />
-        <InfoCard title="Stereo Width" value={`${Math.round(store.parameters.stereoWidth)}%`} sub="Mono → Ultra Wide" />
-        <InfoCard title="Presets" value={`${FACTORY_PRESETS.length + store.userPresets.length}`} sub="Factory + User" />
-      </div>
-
-      {/* PRO TIPS BAR */}
-      <div style={{
-        display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8,
-        padding: '6px 20px', background: 'rgba(13,13,13,0.82)', borderTop: '1px solid #1a1a1a',
-      }}>
-        {TIPS.map((tip, i) => {
-          const active = i === tipIndex;
-          return (
-            <div key={tip.title} style={{
-              background: active ? 'linear-gradient(180deg, rgba(26,26,26,0.75), rgba(15,26,0,0.75))' : 'rgba(17,17,17,0.75)',
-              border: `1px solid ${active ? NEON : '#222'}`, borderRadius: 6, padding: 8,
-              opacity: active ? 1 : 0.6,
-              boxShadow: active ? '0 0 10px rgba(183,255,0,0.08)' : 'none',
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 3 }}>
-                <span style={{ fontSize: 11, color: active ? NEON : '#666' }}>{tip.icon}</span>
-                <span style={{ fontSize: 9, color: active ? NEON : '#888', fontWeight: 700, textTransform: 'uppercase' }}>{tip.title}</span>
-              </div>
-              <span style={{ fontSize: 8, color: '#666', lineHeight: 1.4 }}>{tip.body}</span>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* STATUS BAR */}
-      <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '6px 20px', background: 'rgba(8,8,8,0.82)', borderTop: '1px solid #1a1a1a',
-      }}>
-        <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-          <Meter level={inputLevel} label="Input" />
-          <Meter level={outputLevel} label="Output" />
-        </div>
-        <div style={{ display: 'flex', gap: 20, alignItems: 'center' }}>
-          <Stat label="Audio" value={audioStatus} color={audioEnabled ? NEON : '#666'} />
-          <Stat label="CPU" value={`${cpuUsage.toFixed(1)}%`} color={NEON} />
-          <Stat label="Latency" value="2.1 ms" />
-          <Stat label="Oversample" value={`${store.parameters.oversampling ? '2x' : '1x'}`} />
-          <Stat label="Sample Rate" value={`${store.sampleRate / 1000} kHz`} />
-        </div>
-      </div>
-
-      {/* FOOTER */}
-      <div style={{
-        display: 'flex', flexDirection: 'column', gap: 8,
-        padding: '10px 20px', background: 'rgba(10,10,10,0.82)', borderTop: '1px solid #222',
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            {PLATFORMS.map(p => (
-              <span key={p} style={{ fontSize: 8, color: '#555', border: '1px solid #222', padding: '2px 6px', borderRadius: 3 }}>{p}</span>
-            ))}
-          </div>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            {FORMATS.map(f => (
-              <span key={f} style={{ fontSize: 8, color: NEON, border: `1px solid ${NEON}33`, padding: '2px 6px', borderRadius: 3, background: '#0f1a00' }}>{f}</span>
-            ))}
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 20, alignItems: 'center', paddingTop: 2 }}>
-          {CATEGORIES.map(cat => (
-            <button key={cat.key}
-              onClick={() => store.loadFirstPresetByCategory(cat.key)}
-              style={{
-                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
-                background: 'transparent', border: 'none', cursor: 'pointer', color: '#888',
-              }}>
-              <div style={{
-                width: 32, height: 32, borderRadius: '50%',
-                background: 'rgba(26,26,26,0.85)', border: '1px solid #333',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                boxShadow: '0 0 6px rgba(183,255,0,0.05)',
-              }}>
-                <span style={{ fontSize: 12 }}>{cat.icon}</span>
-              </div>
-              <span style={{ fontSize: 8, textTransform: 'uppercase', letterSpacing: 1, color: '#666' }}>{cat.label}</span>
-            </button>
-          ))}
-        </div>
-
-        <div style={{ textAlign: 'center', fontSize: 8, color: '#444', letterSpacing: 2 }}>
-          R3 NATIVE LABS — PROPRIETARY SPATIAL PROCESSOR
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const Stat: React.FC<{ label: string; value: string; color?: string }> = ({ label, value, color }) => (
-  <div style={{ textAlign: 'center' }}>
-    <span style={{ fontSize: 8, color: '#555' }}>{label}</span>
-    <div style={{ fontSize: 11, color: color || R3V4_COLORS.titaniumSilver, fontWeight: 700 }}>{value}</div>
-  </div>
-);
-
+/* ─── Animated energy border ────────────────────────────────────────── */
 const EnergyBorder: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -544,53 +64,692 @@ const EnergyBorder: React.FC = () => {
     window.addEventListener('resize', resize);
 
     const draw = () => {
-      t += 0.02;
-      const w = canvas.width;
-      const h = canvas.height;
+      t += 0.018;
+      const w = canvas.width, h = canvas.height;
       ctx.clearRect(0, 0, w, h);
 
-      ctx.strokeStyle = '#B7FF00';
-      ctx.lineWidth = 2;
+      // outer glow pulse
+      const pulse = 0.5 + 0.5 * Math.sin(t * 1.2);
+      ctx.strokeStyle = `rgba(183,255,0,${0.25 + pulse * 0.2})`;
+      ctx.lineWidth = 2 + pulse;
       ctx.shadowColor = '#B7FF00';
-      ctx.shadowBlur = 12;
+      ctx.shadowBlur = 10 + pulse * 14;
       ctx.beginPath();
 
-      const points = 40;
-      for (let i = 0; i <= points; i++) {
-        const pct = i / points;
+      const pts = 60;
+      for (let i = 0; i <= pts; i++) {
+        const p = i / pts;
         let x, y;
-        if (pct < 0.25) {
-          x = pct * 4 * w; y = 0;
-        } else if (pct < 0.5) {
-          x = w; y = (pct - 0.25) * 4 * h;
-        } else if (pct < 0.75) {
-          x = w - (pct - 0.5) * 4 * w; y = h;
-        } else {
-          x = 0; y = h - (pct - 0.75) * 4 * h;
-        }
-        const wave = Math.sin(pct * 20 + t) * 4 + Math.sin(pct * 7 - t * 0.5) * 3;
-        if (pct < 0.25) y += wave;
-        else if (pct < 0.5) x -= wave;
-        else if (pct < 0.75) y -= wave;
+        if (p < 0.25) { x = p * 4 * w; y = 0; }
+        else if (p < 0.5) { x = w; y = (p - 0.25) * 4 * h; }
+        else if (p < 0.75) { x = w - (p - 0.5) * 4 * w; y = h; }
+        else { x = 0; y = h - (p - 0.75) * 4 * h; }
+        const wave = Math.sin(p * 22 + t) * 3.5 + Math.sin(p * 9 - t * 0.6) * 2;
+        if (p < 0.25) y += wave;
+        else if (p < 0.5) x -= wave;
+        else if (p < 0.75) y -= wave;
         else x += wave;
-        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
       }
       ctx.closePath();
       ctx.stroke();
       ctx.shadowBlur = 0;
-
       animId = requestAnimationFrame(draw);
     };
     draw();
 
-    return () => {
-      cancelAnimationFrame(animId);
-      window.removeEventListener('resize', resize);
-    };
+    return () => { cancelAnimationFrame(animId); window.removeEventListener('resize', resize); };
   }, []);
 
   return (
     <canvas ref={canvasRef}
-      style={{ position: 'absolute', inset: 0, pointerEvents: 'none', borderRadius: 14, overflow: 'hidden' }} />
+      style={{ position: 'absolute', inset: 0, pointerEvents: 'none', borderRadius: 14, zIndex: 2 }} />
+  );
+};
+
+/* ─── ASI chip badge (octagonal) ───────────────────────────────────── */
+const ASIBadge: React.FC<{ icon: string; label: string; active?: boolean }> = ({ icon, label, active }) => (
+  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+    <div style={{
+      width: 32, height: 32,
+      clipPath: 'polygon(30% 0%,70% 0%,100% 30%,100% 70%,70% 100%,30% 100%,0% 70%,0% 30%)',
+      background: active
+        ? `linear-gradient(135deg, rgba(183,255,0,0.18), rgba(0,0,0,0.7))`
+        : 'linear-gradient(135deg, #1c1c1c, #0a0a0a)',
+      border: 'none',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      boxShadow: active ? `0 0 12px rgba(183,255,0,0.2)` : 'none',
+      position: 'relative',
+    }}>
+      <span style={{ fontSize: 9, color: active ? NEON : '#666', fontWeight: 900, letterSpacing: 0.5 }}>{icon}</span>
+    </div>
+    <span style={{ fontSize: 7.5, color: active ? '#999' : '#444', textTransform: 'uppercase', letterSpacing: 1.2 }}>{label}</span>
+  </div>
+);
+
+/* ─── Section label ─────────────────────────────────────────────────── */
+const SectionLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <span style={{
+    fontSize: 8.5, color: '#4a4a4a', textTransform: 'uppercase', letterSpacing: 2.5, fontWeight: 700,
+    textShadow: '0 1px 0 rgba(0,0,0,0.8)',
+  }}>{children}</span>
+);
+
+/* ─── Info chip ─────────────────────────────────────────────────────── */
+const InfoChip: React.FC<{ title: string; value: string; sub?: string }> = ({ title, value, sub }) => (
+  <div style={{
+    ...glass(0.5, 6),
+    border: '1px solid rgba(255,255,255,0.06)', borderRadius: 6,
+    padding: '7px 12px', display: 'flex', flexDirection: 'column', gap: 1, minWidth: 80,
+  }}>
+    <span style={{ fontSize: 7.5, color: '#3a3a3a', textTransform: 'uppercase', letterSpacing: 1.2 }}>{title}</span>
+    <span style={{ fontSize: 12, color: NEON, fontWeight: 700 }}>{value}</span>
+    {sub && <span style={{ fontSize: 7.5, color: '#555' }}>{sub}</span>}
+  </div>
+);
+
+/* ─── Stat ──────────────────────────────────────────────────────────── */
+const Stat: React.FC<{ label: string; value: string; color?: string }> = ({ label, value, color }) => (
+  <div style={{ textAlign: 'center' }}>
+    <div style={{ fontSize: 7.5, color: '#444', textTransform: 'uppercase', letterSpacing: 1 }}>{label}</div>
+    <div style={{ fontSize: 11, color: color || '#888', fontWeight: 700 }}>{value}</div>
+  </div>
+);
+
+const TIPS = [
+  { title: 'Pre-Delay', body: 'Preserves attack transients. Increase for vocals.', icon: '⏱' },
+  { title: 'EQ the Reverb', body: 'High-pass and low-pass the reverb return.', icon: '≃' },
+  { title: 'Parallel', body: 'Blend ambience using aux buses.', icon: '∿' },
+  { title: 'Short Decays', body: 'Improve clarity for drums.', icon: '▼' },
+  { title: 'Long Decays', body: 'Create cinematic textures and pads.', icon: '▲' },
+];
+
+const FEATURES: { icon: string; label: string }[] = [
+  { icon: 'AI', label: 'Smart AI' },
+  { icon: '3D', label: 'Spatial' },
+  { icon: 'FDN', label: '8×8 Matrix' },
+  { icon: '2x', label: 'Oversample' },
+  { icon: 'RT', label: 'Real-Time' },
+  { icon: 'LOW', label: 'Low CPU' },
+];
+
+const CATEGORIES = [
+  { key: 'Drums', label: 'Drums', icon: '▶' },
+  { key: 'Keys', label: 'Keys', icon: '◆' },
+  { key: 'Vocals', label: 'Vocals', icon: '◉' },
+  { key: 'Master Bus', label: 'Buss', icon: '◈' },
+  { key: 'Master', label: 'Master', icon: 'M' },
+];
+
+const FORMATS = ['VST3', 'AU', 'AAX', 'STANDALONE', 'WEB'];
+const PLATFORMS = ['LINUX', 'WINDOWS', 'macOS'];
+
+export const R3V4Plugin: React.FC = () => {
+  const store = useR3V4Store();
+  const engineRef = useRef<R3V4AudioEngine | null>(null);
+  const [tipIndex, setTipIndex] = useState(0);
+  const [inputLevel, setInputLevel] = useState(0);
+  const [outputLevel, setOutputLevel] = useState(0);
+  const [cpuUsage, setCpuUsage] = useState(0);
+  const [audioEnabled, setAudioEnabled] = useState(false);
+  const [audioStatus, setAudioStatus] = useState('Audio off');
+  const [inputSource, setInputSource] = useState<InputSource>('test-tone');
+  const [presetDisplay, setPresetDisplay] = useState('');
+  const [asiPulse, setAsiPulse] = useState(false);
+
+  useEffect(() => {
+    const engine = new R3V4AudioEngine();
+    engineRef.current = engine;
+    engine.onMetrics((m) => {
+      setInputLevel(m.peakInputL || 0);
+      setOutputLevel(m.peakOutputL || 0);
+      setCpuUsage(m.cpuLoad || 0);
+    });
+    return () => engine.close();
+  }, []);
+
+  useEffect(() => {
+    const iv = setInterval(() => setAsiPulse(p => !p), 1800);
+    return () => clearInterval(iv);
+  }, []);
+
+  const enableAudio = async () => {
+    const e = engineRef.current;
+    if (!e) return;
+    const ok = await e.initialize(inputSource);
+    if (ok) { setAudioEnabled(true); setAudioStatus(inputSource === 'mic' ? 'Microphone' : 'Test Tone'); }
+    else setAudioStatus('Audio failed');
+  };
+
+  const toggleAudio = async () => {
+    const e = engineRef.current;
+    if (!e) return;
+    if (!e.initialized) { await enableAudio(); return; }
+    e.toggle();
+    const running = e.isRunning;
+    setAudioEnabled(running);
+    setAudioStatus(running ? (inputSource === 'mic' ? 'Microphone' : 'Test Tone') : 'Paused');
+  };
+
+  const changeInputSource = async (source: InputSource) => {
+    setInputSource(source);
+    const e = engineRef.current;
+    if (!e) return;
+    if (e.initialized) { await e.setInputSource(source); setAudioStatus(source === 'mic' ? 'Microphone' : 'Test Tone'); }
+  };
+
+  useEffect(() => { engineRef.current?.setParameters(store.parameters); }, [store.parameters]);
+
+  useEffect(() => {
+    const name = store.presetName.split('—').pop()?.trim() || store.presetName;
+    setPresetDisplay(`${store.spaceMode.toUpperCase()} ${name.toUpperCase()}`);
+  }, [store.presetName, store.spaceMode]);
+
+  useEffect(() => {
+    const iv = setInterval(() => setTipIndex(i => (i + 1) % TIPS.length), 8000);
+    return () => clearInterval(iv);
+  }, []);
+
+  const handleParamChange = useCallback((param: string, value: number | boolean) => {
+    store.setParameter(param as any, value);
+  }, [store]);
+
+  const allPresets = useMemo(() => [...FACTORY_PRESETS, ...store.userPresets], [store.userPresets]);
+
+  const handlePresetChange = (e: React.ChangeEvent<HTMLSelectElement>) => store.loadPresetByName(e.target.value);
+
+  const btnBase: React.CSSProperties = {
+    ...glass(0.65, 4),
+    border: '1px solid rgba(255,255,255,0.07)',
+    color: '#666', padding: '4px 10px', borderRadius: 5, fontSize: 9,
+    cursor: 'pointer', letterSpacing: 1, transition: 'all 0.18s',
+  };
+  const btnActive: React.CSSProperties = { ...btnBase, borderColor: '#444', color: '#aaa' };
+
+  const knobRows = [
+    ['preDelay', 'Pre-Delay'], ['decay', 'Decay'], ['size', 'Size'], ['diffusion', 'Diffusion'],
+    ['damping', 'Damping'], ['highCut', 'High Cut'], ['lowCut', 'Low Cut'], ['bassDamping', 'Bass Damp'],
+    ['earlyReflections', 'Early Ref'], ['crosstalk', 'Crosstalk'], ['modulation', 'Modulation'], ['stereoWidth', 'Width'],
+  ] as const;
+
+  return (
+    <div style={{
+      fontFamily: "'SF Pro Display', 'Inter', system-ui, sans-serif",
+      color: R3V4_COLORS.titaniumSilver,
+      width: '100%', maxWidth: 1020, margin: '0 auto',
+      borderRadius: 14, overflow: 'hidden',
+      // Skin texture base
+      backgroundImage: [
+        'linear-gradient(160deg, rgba(8,8,8,0.82) 0%, rgba(4,4,4,0.9) 50%, rgba(8,8,8,0.82) 100%)',
+        'url(/skin-texture.png)',
+      ].join(', '),
+      backgroundSize: 'cover, cover',
+      backgroundPosition: 'center, center',
+      backgroundBlendMode: 'normal, overlay',
+      border: '1px solid rgba(255,255,255,0.08)',
+      boxShadow: [
+        '0 0 60px rgba(183,255,0,0.05)',
+        '0 30px 80px rgba(0,0,0,0.9)',
+        'inset 0 1px 0 rgba(255,255,255,0.06)',
+        'inset 0 0 80px rgba(0,0,0,0.7)',
+      ].join(', '),
+      position: 'relative',
+      opacity: store.isProcessing ? 1 : 0.42,
+      transition: 'opacity 0.35s ease',
+    }}>
+      {/* ASI circuit overlay */}
+      <CircuitOverlay />
+      {/* Animated neon border */}
+      <EnergyBorder />
+
+      {/* ── HEADER ──────────────────────────────────────────────────── */}
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '9px 20px',
+        ...glass(0.78, 12),
+        borderBottom: '1px solid rgba(255,255,255,0.05)',
+        position: 'relative', zIndex: 1,
+      }}>
+        {/* Logo block */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{
+            width: 38, height: 38, borderRadius: '50%',
+            background: 'radial-gradient(circle at 32% 28%, #d4ff55, #7ab800)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 0 20px rgba(183,255,0,0.45), inset 0 0 6px rgba(0,0,0,0.4)',
+            border: '2px solid rgba(255,255,255,0.15)',
+            flexShrink: 0,
+          }}>
+            <span style={{ fontSize: 12, fontWeight: 900, color: '#060606', letterSpacing: -0.5 }}>R3</span>
+          </div>
+
+          <div>
+            <div style={{
+              fontSize: 21, fontWeight: 900, color: NEON, letterSpacing: 3.5,
+              textShadow: `0 0 14px rgba(183,255,0,0.55), 0 2px 0 #111`,
+              WebkitTextStroke: '0.5px rgba(255,255,255,0.12)',
+              lineHeight: 1,
+            }}>R3V4</div>
+            <div style={{ fontSize: 8.5, color: '#444', letterSpacing: 3, fontWeight: 600 }}>REVERB ENGINE v1.0</div>
+          </div>
+
+          <div style={{
+            fontFamily: "'Brush Script MT', 'Dancing Script', cursive",
+            fontSize: 17, color: GOLD, fontStyle: 'italic',
+            textShadow: `0 0 8px rgba(212,175,55,0.35)`,
+            marginLeft: 8, opacity: 0.92,
+          }}>By Dj Ernesto</div>
+        </div>
+
+        {/* ASI feature chips */}
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          {FEATURES.map(f => <ASIBadge key={f.label} icon={f.icon} label={f.label} active={store.isProcessing} />)}
+        </div>
+
+        {/* Controls */}
+        <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+            <span style={{ fontSize: 7.5, color: '#444', textTransform: 'uppercase', letterSpacing: 1 }}>Undo</span>
+            <button onClick={store.undo} disabled={store.historyIndex <= 0}
+              style={{ ...store.historyIndex > 0 ? btnActive : btnBase }}>↶</button>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+            <span style={{ fontSize: 7.5, color: '#444', textTransform: 'uppercase', letterSpacing: 1 }}>Redo</span>
+            <button onClick={store.redo} disabled={store.historyIndex >= store.history.length - 1}
+              style={{ ...store.historyIndex < store.history.length - 1 ? btnActive : btnBase }}>↷</button>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+            <span style={{ fontSize: 7.5, color: '#444', textTransform: 'uppercase', letterSpacing: 1 }}>A / B</span>
+            <button onClick={() => store.activeAB === 'A' ? store.captureStateA() : store.captureStateB()}
+              style={{ ...btnActive, borderColor: NEON, color: NEON }}>A/B</button>
+          </div>
+
+          {/* Input source */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+            <span style={{ fontSize: 7.5, color: '#444', textTransform: 'uppercase', letterSpacing: 1 }}>Input</span>
+            <select value={inputSource} onChange={(e) => changeInputSource(e.target.value as InputSource)}
+              style={{ ...glass(0.7, 4), border: '1px solid rgba(255,255,255,0.07)', color: '#888', padding: '4px 8px', borderRadius: 5, fontSize: 9 }}>
+              <option value="test-tone">Test Tone</option>
+              <option value="mic">Microphone</option>
+            </select>
+          </div>
+
+          {/* Audio enable */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+            <span style={{ fontSize: 7.5, color: '#444', textTransform: 'uppercase', letterSpacing: 1 }}>Audio</span>
+            <button onClick={toggleAudio} style={{
+              padding: '5px 12px', borderRadius: 5, fontSize: 9, fontWeight: 700, letterSpacing: 1,
+              cursor: 'pointer', border: `1px solid ${audioEnabled ? 'rgba(183,255,0,0.5)' : 'rgba(255,255,255,0.07)'}`,
+              background: audioEnabled ? 'radial-gradient(circle at 30% 28%, #c8ff33, #6aaa00)' : 'rgba(20,20,20,0.85)',
+              color: audioEnabled ? '#060606' : '#666',
+              boxShadow: audioEnabled ? '0 0 14px rgba(183,255,0,0.4)' : 'none',
+              transition: 'all 0.2s', minWidth: 80,
+            }}>{audioEnabled ? '● ON' : 'ENABLE'}</button>
+          </div>
+
+          {/* Power */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+            <span style={{ fontSize: 7.5, color: '#444', textTransform: 'uppercase', letterSpacing: 1 }}>Power</span>
+            <button onClick={store.togglePower} style={{
+              width: 34, height: 34, borderRadius: '50%',
+              background: store.isProcessing
+                ? 'radial-gradient(circle at 30% 28%, #c8ff33, #6aaa00)'
+                : 'rgba(18,18,18,0.85)',
+              border: `2px solid ${store.isProcessing ? 'rgba(183,255,0,0.5)' : 'rgba(255,255,255,0.08)'}`,
+              color: store.isProcessing ? '#060606' : '#555',
+              fontSize: 15, cursor: 'pointer',
+              boxShadow: store.isProcessing ? '0 0 22px rgba(183,255,0,0.55)' : 'inset 0 0 10px rgba(0,0,0,0.9)',
+              transition: 'all 0.22s',
+            }}>⏻</button>
+          </div>
+        </div>
+      </div>
+
+      {/* ── PRESET BAR ──────────────────────────────────────────────── */}
+      <div style={{
+        display: 'flex', alignItems: 'flex-end', gap: 10, padding: '6px 20px',
+        ...glass(0.7, 10),
+        borderBottom: '1px solid rgba(255,255,255,0.04)', position: 'relative', zIndex: 1,
+      }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+          <SectionLabel>Preset</SectionLabel>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+            <button onClick={store.previousPreset} style={{ ...btnActive, padding: '4px 8px', fontSize: 12 }}>◀</button>
+            <div style={{
+              maxWidth: 280, textAlign: 'center', padding: '6px 14px', borderRadius: 5,
+              background: 'linear-gradient(90deg, rgba(15,15,15,0.9), rgba(22,22,22,0.9), rgba(15,15,15,0.9))',
+              border: '1px solid rgba(183,255,0,0.15)',
+              fontSize: 11, color: NEON, fontWeight: 700, letterSpacing: 2,
+              boxShadow: `inset 0 0 10px rgba(0,0,0,0.7), 0 0 8px rgba(183,255,0,0.06)`,
+              backdropFilter: 'blur(4px)',
+            }}>{presetDisplay}</div>
+            <button onClick={store.nextPreset} style={{ ...btnActive, padding: '4px 8px', fontSize: 12 }}>▶</button>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 3, flex: 1, maxWidth: 200 }}>
+          <SectionLabel>Library</SectionLabel>
+          <select value={store.presetName} onChange={handlePresetChange}
+            style={{ ...glass(0.7, 4), border: '1px solid rgba(255,255,255,0.06)', color: '#888', padding: '4px 10px', borderRadius: 5, fontSize: 10, width: '100%' }}>
+            {allPresets.map(p => <option key={p.name} value={p.name}>{p.name}</option>)}
+          </select>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+          <SectionLabel>Save</SectionLabel>
+          <button onClick={() => store.saveUserPreset(`Custom ${Date.now()}`, 'User')} style={btnActive}>💾</button>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+          <SectionLabel>Random</SectionLabel>
+          <button onClick={store.randomize} style={btnActive}>⚄</button>
+        </div>
+      </div>
+
+      {/* ── MAIN BODY ───────────────────────────────────────────────── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '258px 1fr', minHeight: 350, position: 'relative', zIndex: 1 }}>
+
+        {/* LEFT PANEL — transparent glass */}
+        <div style={{
+          padding: 10, display: 'flex', flexDirection: 'column', gap: 6,
+          borderRight: '1px solid rgba(255,255,255,0.04)',
+          ...glass(0.38, 12),
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: 9.5, color: NEON, textTransform: 'uppercase', letterSpacing: 2.5, fontWeight: 700, textShadow: `0 0 8px rgba(183,255,0,0.3)` }}>
+              Space Visualizer
+            </span>
+            <span style={{
+              fontSize: 9, color: '#555', letterSpacing: 2, padding: '1px 6px',
+              border: '1px solid rgba(255,255,255,0.05)', borderRadius: 3,
+            }}>{store.spaceMode.toUpperCase()}</span>
+          </div>
+
+          {/* Cube sits on a near-transparent backing */}
+          <div style={{
+            borderRadius: 10, overflow: 'hidden',
+            background: 'rgba(0,0,0,0.25)',
+            border: '1px solid rgba(255,255,255,0.04)',
+            backdropFilter: 'blur(6px)',
+          }}>
+            <SpaceCube size={store.parameters.size} decay={store.parameters.decay} />
+          </div>
+
+          {/* Space mode buttons */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 3 }}>
+            {SPACE_MODES.map(mode => {
+              const active = store.spaceMode === mode;
+              return (
+                <button key={mode} onClick={() => store.setSpaceMode(mode as SpaceMode)}
+                  style={{
+                    background: active ? 'rgba(183,255,0,0.08)' : 'rgba(0,0,0,0.3)',
+                    border: `1px solid ${active ? 'rgba(183,255,0,0.4)' : 'rgba(255,255,255,0.05)'}`,
+                    color: active ? NEON : '#555',
+                    padding: '5px 0', borderRadius: 4, fontSize: 7.5, cursor: 'pointer', letterSpacing: 1,
+                    boxShadow: active ? '0 0 8px rgba(183,255,0,0.12)' : 'none',
+                    backdropFilter: 'blur(4px)',
+                    transition: 'all 0.15s',
+                  }}>
+                  {mode.toUpperCase()}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* ASI Smart Mode button */}
+          <button onClick={() => {}}
+            style={{
+              background: asiPulse
+                ? 'linear-gradient(90deg, rgba(183,255,0,0.1), rgba(0,255,100,0.06), rgba(183,255,0,0.1))'
+                : 'linear-gradient(90deg, rgba(10,10,10,0.7), rgba(20,35,0,0.7))',
+              border: `1px solid ${asiPulse ? 'rgba(183,255,0,0.5)' : 'rgba(183,255,0,0.2)'}`,
+              color: NEON, padding: '10px 0', borderRadius: 7, fontSize: 9.5,
+              cursor: 'pointer', letterSpacing: 2.5, fontWeight: 700,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+              boxShadow: asiPulse
+                ? '0 0 18px rgba(183,255,0,0.18), inset 0 0 12px rgba(183,255,0,0.05)'
+                : '0 0 6px rgba(183,255,0,0.06)',
+              backdropFilter: 'blur(6px)',
+              transition: 'all 0.9s ease',
+            }}>
+            <span style={{ fontSize: 14, lineHeight: 1, textShadow: `0 0 6px rgba(183,255,0,0.8)` }}>✦</span>
+            ASI SMART MODE
+          </button>
+
+          {/* Neural status readout */}
+          <div style={{
+            ...glass(0.3, 8),
+            border: '1px solid rgba(255,255,255,0.04)',
+            borderRadius: 6, padding: '6px 10px',
+          }}>
+            <div style={{ fontSize: 7.5, color: '#3a3a3a', textTransform: 'uppercase', letterSpacing: 2, marginBottom: 4 }}>Neural Core</div>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              {['Inference', 'Diffusion', 'Spatial', 'Mastery'].map(n => (
+                <span key={n} style={{
+                  fontSize: 7, color: store.isProcessing ? NEON : '#333',
+                  border: `1px solid ${store.isProcessing ? 'rgba(183,255,0,0.2)' : 'rgba(255,255,255,0.04)'}`,
+                  borderRadius: 2, padding: '1px 5px', letterSpacing: 1,
+                  textShadow: store.isProcessing ? '0 0 5px rgba(183,255,0,0.4)' : 'none',
+                }}>{n}</span>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* RIGHT PANEL — light glass */}
+        <div style={{
+          padding: 10, display: 'flex', flexDirection: 'column', gap: 8,
+          ...glass(0.3, 8),
+        }}>
+          {/* 12 knobs — floating glass card */}
+          <div style={{
+            display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '14px 8px',
+            padding: 14,
+            ...glass(0.5, 10),
+            borderRadius: 10,
+            border: '1px solid rgba(255,255,255,0.05)',
+            boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04)',
+          }}>
+            {knobRows.map(([param, label]) => (
+              <Knob key={param}
+                value={store.parameters[param as keyof typeof store.parameters] as number}
+                range={PARAMETER_RANGES[param]}
+                label={label}
+                onChange={(v) => handleParamChange(param, v)}
+                size={52}
+              />
+            ))}
+          </div>
+
+          {/* Mix section — glass card */}
+          <div style={{
+            display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1.6fr', gap: 16,
+            padding: 14,
+            ...glass(0.5, 10),
+            borderRadius: 10,
+            border: '1px solid rgba(255,255,255,0.05)',
+            alignItems: 'flex-end',
+          }}>
+            {[
+              { param: 'dry', label: 'DRY', sec: 'Direct' },
+              { param: 'er', label: 'ER', sec: 'Early' },
+              { param: 'wet', label: 'WET', sec: 'Reverb' },
+            ].map(({ param, label, sec }) => (
+              <div key={param} style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'center' }}>
+                <SectionLabel>{sec}</SectionLabel>
+                <Fader
+                  value={store.parameters[param as keyof typeof store.parameters] as number}
+                  label={label}
+                  onChange={(v) => handleParamChange(param, v)}
+                />
+              </div>
+            ))}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, justifyContent: 'flex-end' }}>
+              <SectionLabel>Imaging</SectionLabel>
+              <StereoWidthSlider value={store.parameters.stereoWidth} min={0} max={200}
+                onChange={(v) => handleParamChange('stereoWidth', v)} />
+            </div>
+          </div>
+
+          {/* Toggle buttons */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+            <SectionLabel>Global Switches</SectionLabel>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 7 }}>
+              {[
+                { param: 'freeze', icon: '❄', label: 'Freeze', sub: 'Infinite Hold' },
+                { param: 'ducking', icon: '▽', label: 'Ducking', sub: 'Auto-Lower' },
+                { param: 'tempoSync', icon: '⌛', label: 'Tempo Sync', sub: 'BPM Lock' },
+                { param: 'oversampling', icon: '⊕', label: 'Oversample', sub: '2× Quality' },
+              ].map(({ param, icon, label, sub }) => {
+                const active = store.parameters[param as keyof typeof store.parameters] as boolean;
+                return (
+                  <button key={param}
+                    onClick={() => handleParamChange(param, !active)}
+                    style={{
+                      background: active
+                        ? 'linear-gradient(180deg, rgba(183,255,0,0.1), rgba(15,35,0,0.7))'
+                        : 'rgba(10,10,10,0.55)',
+                      border: `1px solid ${active ? 'rgba(183,255,0,0.35)' : 'rgba(255,255,255,0.05)'}`,
+                      color: active ? NEON : '#555',
+                      padding: 9, borderRadius: 7, fontSize: 9.5, cursor: 'pointer',
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+                      boxShadow: active ? '0 0 12px rgba(183,255,0,0.12), inset 0 0 8px rgba(183,255,0,0.04)' : 'none',
+                      backdropFilter: 'blur(6px)',
+                      transition: 'all 0.18s',
+                    }}>
+                    <span style={{ fontSize: 15, lineHeight: 1 }}>{icon}</span>
+                    <span style={{ fontWeight: 700, letterSpacing: 0.5 }}>{label}</span>
+                    <span style={{ fontSize: 7.5, color: active ? 'rgba(183,255,0,0.5)' : '#333', letterSpacing: 1 }}>{sub}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── BOTTOM INFO PANEL ────────────────────────────────────────── */}
+      <div style={{
+        display: 'flex', gap: 7, padding: '6px 18px',
+        ...glass(0.55, 14),
+        borderTop: '1px solid rgba(255,255,255,0.04)',
+        overflowX: 'auto', position: 'relative', zIndex: 1,
+      }}>
+        <InfoChip title="Space" value={store.spaceMode.toUpperCase()} sub={store.presetName} />
+        <InfoChip title="Size" value={`${Math.round(store.parameters.size)}%`} sub="Room dimensions" />
+        <InfoChip title="High Cut" value={PARAMETER_RANGES.highCut.displayFormat(store.parameters.highCut)} sub="Tail LPF" />
+        <InfoChip title="Width" value={`${Math.round(store.parameters.stereoWidth)}%`} sub="Mono → Ultra Wide" />
+        <InfoChip title="Presets" value={`${FACTORY_PRESETS.length + store.userPresets.length}`} sub="Factory + User" />
+      </div>
+
+      {/* ── PRO TIPS ─────────────────────────────────────────────────── */}
+      <div style={{
+        display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 6,
+        padding: '6px 18px',
+        ...glass(0.45, 10),
+        borderTop: '1px solid rgba(255,255,255,0.03)', position: 'relative', zIndex: 1,
+      }}>
+        {TIPS.map((tip, i) => {
+          const active = i === tipIndex;
+          return (
+            <div key={tip.title} style={{
+              background: active ? 'rgba(183,255,0,0.06)' : 'rgba(0,0,0,0.25)',
+              border: `1px solid ${active ? 'rgba(183,255,0,0.25)' : 'rgba(255,255,255,0.03)'}`,
+              borderRadius: 6, padding: 7,
+              opacity: active ? 1 : 0.55,
+              backdropFilter: 'blur(4px)',
+              transition: 'all 0.6s ease',
+              boxShadow: active ? '0 0 10px rgba(183,255,0,0.06)' : 'none',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 3 }}>
+                <span style={{ fontSize: 10, color: active ? NEON : '#555' }}>{tip.icon}</span>
+                <span style={{ fontSize: 8.5, color: active ? NEON : '#777', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1 }}>{tip.title}</span>
+              </div>
+              <span style={{ fontSize: 7.5, color: '#555', lineHeight: 1.45 }}>{tip.body}</span>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* ── STATUS BAR ───────────────────────────────────────────────── */}
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '5px 18px',
+        ...glass(0.65, 14),
+        borderTop: '1px solid rgba(255,255,255,0.04)', position: 'relative', zIndex: 1,
+      }}>
+        <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
+          <Meter level={inputLevel} label="Input" />
+          <Meter level={outputLevel} label="Output" />
+        </div>
+        <div style={{ display: 'flex', gap: 18, alignItems: 'center' }}>
+          <Stat label="Audio" value={audioStatus} color={audioEnabled ? NEON : '#555'} />
+          <Stat label="CPU" value={`${cpuUsage.toFixed(1)}%`} color={NEON} />
+          <Stat label="Latency" value="2.1 ms" />
+          <Stat label="OS Rate" value={`${store.parameters.oversampling ? '2x' : '1x'}`} />
+          <Stat label="Sample Rate" value={`${store.sampleRate / 1000} kHz`} />
+          <Stat label="Neural" value={store.isProcessing ? 'ACTIVE' : 'IDLE'} color={store.isProcessing ? NEON : '#444'} />
+        </div>
+      </div>
+
+      {/* ── FOOTER ───────────────────────────────────────────────────── */}
+      <div style={{
+        display: 'flex', flexDirection: 'column', gap: 7,
+        padding: '8px 18px',
+        ...glass(0.6, 14),
+        borderTop: '1px solid rgba(255,255,255,0.04)', position: 'relative', zIndex: 1,
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: 6 }}>
+            {PLATFORMS.map(p => (
+              <span key={p} style={{
+                fontSize: 7.5, color: '#444',
+                border: '1px solid rgba(255,255,255,0.05)',
+                padding: '2px 6px', borderRadius: 3,
+                backdropFilter: 'blur(4px)',
+              }}>{p}</span>
+            ))}
+          </div>
+          <div style={{ display: 'flex', gap: 6 }}>
+            {FORMATS.map(f => (
+              <span key={f} style={{
+                fontSize: 7.5, color: NEON,
+                border: `1px solid rgba(183,255,0,0.2)`,
+                padding: '2px 7px', borderRadius: 3,
+                background: 'rgba(183,255,0,0.05)',
+                backdropFilter: 'blur(4px)',
+              }}>{f}</span>
+            ))}
+          </div>
+        </div>
+
+        {/* Category presets */}
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 18, alignItems: 'center' }}>
+          {CATEGORIES.map(cat => (
+            <button key={cat.key}
+              onClick={() => store.loadFirstPresetByCategory(cat.key)}
+              style={{
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+                background: 'transparent', border: 'none', cursor: 'pointer',
+              }}>
+              <div style={{
+                width: 30, height: 30,
+                clipPath: 'polygon(30% 0%,70% 0%,100% 30%,100% 70%,70% 100%,30% 100%,0% 70%,0% 30%)',
+                background: 'rgba(20,20,20,0.6)',
+                border: 'none',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                backdropFilter: 'blur(4px)',
+              }}>
+                <span style={{ fontSize: 11, color: '#666' }}>{cat.icon}</span>
+              </div>
+              <span style={{ fontSize: 7.5, textTransform: 'uppercase', letterSpacing: 1.5, color: '#444' }}>{cat.label}</span>
+            </button>
+          ))}
+        </div>
+
+        <div style={{ textAlign: 'center', fontSize: 7.5, color: '#2a2a2a', letterSpacing: 2.5 }}>
+          R3 NATIVE LABS — ASI SPATIAL PROCESSOR — MASTERY EDITION
+        </div>
+      </div>
+    </div>
   );
 };

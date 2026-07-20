@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 
-const NEON_GREEN = '#B7FF00';
+const NEON = '#B7FF00';
 
 interface FaderProps {
   value: number;
@@ -10,18 +10,20 @@ interface FaderProps {
 
 export const Fader: React.FC<FaderProps> = ({ value, label, onChange }) => {
   const [dragging, setDragging] = useState(false);
+  const [hovered, setHovered] = useState(false);
   const trackRef = useRef<HTMLDivElement>(null);
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    setDragging(true);
-    updateFromMouse(e);
-  };
 
   const updateFromMouse = (e: MouseEvent | React.MouseEvent) => {
     if (!trackRef.current) return;
     const rect = trackRef.current.getBoundingClientRect();
     const pct = 1 - (e.clientY - rect.top) / rect.height;
     onChange(Math.max(0, Math.min(100, pct * 100)));
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setDragging(true);
+    updateFromMouse(e);
+    e.preventDefault();
   };
 
   useEffect(() => {
@@ -37,66 +39,108 @@ export const Fader: React.FC<FaderProps> = ({ value, label, onChange }) => {
     };
   }, [dragging]);
 
-  const segments = [0, 20, 40, 60, 80, 100];
+  // 12 LED segments
+  const SEGS = 12;
+  const activeSegs = Math.round((value / 100) * SEGS);
+  const segColor = (i: number) => {
+    if (i >= SEGS - activeSegs) {
+      if (i >= SEGS - 2) return '#ff4444';        // clip zone
+      if (i >= SEGS - 4) return '#ffaa00';        // hot zone
+      return NEON;
+    }
+    return '#1a1a1a';
+  };
+  const segGlow = (i: number): string => {
+    if (i < SEGS - activeSegs) return 'none';
+    if (i >= SEGS - 2) return '0 0 5px #ff4444';
+    if (i >= SEGS - 4) return '0 0 5px #ffaa00';
+    return `0 0 5px ${NEON}`;
+  };
+
+  const handlePct = 100 - value;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, userSelect: 'none' }}>
-      <div style={{ display: 'flex', gap: 4, alignItems: 'stretch', height: 70 }}>
-        {/* Left LED segment strip */}
-        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '4px 0' }}>
-          {segments.map((seg, i) => {
-            const active = value >= seg;
-            return (
-              <div key={i} style={{
-                width: 4, height: 8, borderRadius: 1,
-                background: active ? NEON_GREEN : '#1a1a1a',
-                boxShadow: active ? `0 0 4px ${NEON_GREEN}` : 'none',
-                transition: 'all 0.05s',
-              }} />
-            );
-          })}
+    <div
+      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, userSelect: 'none' }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <div style={{ display: 'flex', gap: 5, alignItems: 'stretch', height: 80 }}>
+
+        {/* LED column */}
+        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '2px 0' }}>
+          {Array.from({ length: SEGS }).map((_, i) => (
+            <div key={i} style={{
+              width: 3, height: 5, borderRadius: 1,
+              background: segColor(i),
+              boxShadow: segGlow(i),
+              transition: 'background 0.04s',
+            }} />
+          ))}
         </div>
 
+        {/* Track */}
         <div
           ref={trackRef}
           style={{
-            width: 24, height: 70,
-            background: 'linear-gradient(90deg, #0a0a0a, #151515, #0a0a0a)',
-            borderRadius: 8, position: 'relative', overflow: 'hidden',
-            border: '1px solid #222', cursor: 'ns-resize',
-            boxShadow: 'inset 0 0 8px rgba(0,0,0,0.8)',
+            width: 22, height: 80, position: 'relative', cursor: 'ns-resize',
+            background: 'linear-gradient(90deg, #080808 0%, #141414 40%, #0d0d0d 100%)',
+            borderRadius: 6,
+            border: '1px solid #2a2a2a',
+            boxShadow: 'inset 0 0 12px rgba(0,0,0,0.9), inset 0 1px 0 rgba(255,255,255,0.04)',
+            overflow: 'hidden',
           }}
           onMouseDown={handleMouseDown}
         >
-          {/* Metallic track edges */}
-          <div style={{ position: 'absolute', left: 2, right: 2, top: 4, bottom: 4, borderRadius: 6, border: '1px solid #333' }} />
-          
-          {/* Green LED fill */}
+          {/* Track center rail */}
           <div style={{
-            position: 'absolute', bottom: 4, left: 4, right: 4,
-            height: `calc(${(value / 100) * 100}% - 4px)`,
-            minHeight: 0,
-            background: `linear-gradient(0deg, ${NEON_GREEN} 0%, rgba(183,255,0,0.25) 100%)`,
-            borderRadius: '0 0 5px 5px',
-            boxShadow: `0 0 12px ${NEON_GREEN}44`,
-            transition: 'height 0.05s',
+            position: 'absolute', left: '50%', top: 6, bottom: 6,
+            width: 2, transform: 'translateX(-50%)',
+            background: 'linear-gradient(180deg, #222, #333, #222)',
+            borderRadius: 1,
           }} />
 
-          {/* Silver handle with shadow */}
+          {/* Fill glow */}
           <div style={{
-            position: 'absolute', left: 2, right: 2, height: 12,
-            background: 'linear-gradient(180deg, #f0f0f0, #aaa, #666, #444)',
-            borderRadius: 3,
-            boxShadow: '0 2px 6px rgba(0,0,0,0.8), 0 0 8px rgba(183,255,0,0.3)',
-            top: `${100 - value}%`, transform: 'translateY(-50%)',
-            pointerEvents: 'none',
-            border: '1px solid #333',
+            position: 'absolute', bottom: 6, left: 3, right: 3,
+            height: `calc(${value}% - 6px)`,
+            background: `linear-gradient(0deg, ${NEON} 0%, rgba(183,255,0,0.18) 100%)`,
+            borderRadius: '0 0 4px 4px',
+            boxShadow: `0 0 14px rgba(183,255,0,0.3)`,
+            transition: 'height 0.04s',
+            minHeight: 0,
           }} />
+
+          {/* Knurled aluminum handle */}
+          <div style={{
+            position: 'absolute', left: -1, right: -1, height: 16,
+            top: `${handlePct}%`, transform: 'translateY(-50%)',
+            pointerEvents: 'none',
+            borderRadius: 4,
+            background: 'linear-gradient(180deg, #e0e0e0 0%, #c0c0c0 15%, #888 35%, #666 50%, #888 65%, #c0c0c0 85%, #e0e0e0 100%)',
+            boxShadow: `0 2px 8px rgba(0,0,0,0.9), 0 -1px 0 rgba(255,255,255,0.3), 0 0 ${hovered ? '10px' : '4px'} rgba(183,255,0,0.25)`,
+            border: '1px solid #444',
+          }}>
+            {/* Knurl lines */}
+            {[3, 6, 9, 12].map(x => (
+              <div key={x} style={{
+                position: 'absolute', top: 3, bottom: 3, left: x,
+                width: 1, background: 'rgba(0,0,0,0.4)', borderRadius: 1,
+              }} />
+            ))}
+            {/* Center highlight stripe */}
+            <div style={{
+              position: 'absolute', left: 2, right: 2, top: '50%', height: 2,
+              transform: 'translateY(-50%)',
+              background: 'rgba(255,255,255,0.25)',
+              borderRadius: 1,
+            }} />
+          </div>
         </div>
       </div>
 
-      <span style={{ fontSize: 10, color: NEON_GREEN, fontWeight: 700, letterSpacing: 1 }}>{label}</span>
-      <span style={{ fontSize: 11, color: '#aaa', fontVariantNumeric: 'tabular-nums' }}>{Math.round(value)}%</span>
+      <span style={{ fontSize: 9, color: NEON, fontWeight: 800, letterSpacing: 1.5, textShadow: `0 0 8px rgba(183,255,0,0.4)` }}>{label}</span>
+      <span style={{ fontSize: 10, color: '#999', fontVariantNumeric: 'tabular-nums', letterSpacing: 0.5 }}>{Math.round(value)}%</span>
     </div>
   );
 };

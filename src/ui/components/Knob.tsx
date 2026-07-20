@@ -1,7 +1,10 @@
 import React, { useRef, useEffect, useCallback, useState } from 'react';
 import { ParameterRange } from '../../types/reverb';
 
-const NEON_GREEN = '#B7FF00';
+const NEON = '#B7FF00';
+const CHROME_HI = '#f0f0f0';
+const CHROME_MID = '#888';
+const CHROME_LO = '#1a1a1a';
 
 interface KnobProps {
   value: number;
@@ -11,9 +14,10 @@ interface KnobProps {
   size?: number;
 }
 
-export const Knob: React.FC<KnobProps> = ({ value, range, label, onChange, size = 64 }) => {
+export const Knob: React.FC<KnobProps> = ({ value, range, label, onChange, size = 52 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [dragging, setDragging] = useState(false);
+  const [hovered, setHovered] = useState(false);
   const startYRef = useRef(0);
   const startValRef = useRef(0);
 
@@ -22,85 +26,160 @@ export const Knob: React.FC<KnobProps> = ({ value, range, label, onChange, size 
     if (!canvas) return;
     const ctx = canvas.getContext('2d')!;
     const dpr = window.devicePixelRatio || 1;
-    const w = size * dpr;
-    canvas.width = w;
-    canvas.height = w;
+    canvas.width = size * dpr;
+    canvas.height = size * dpr;
     ctx.scale(dpr, dpr);
 
     const cx = size / 2;
     const cy = size / 2;
-    const r = size / 2 - 4;
+    const R = size / 2 - 3;
+    const pct = Math.max(0, Math.min(1, (value - range.min) / (range.max - range.min)));
+    const startAng = Math.PI * 0.75;
+    const sweepAng = Math.PI * 1.5;
+    const endAng = startAng + pct * sweepAng;
 
     ctx.clearRect(0, 0, size, size);
 
-    // Outer shadow ring
+    // ─── Deep shadow well ───────────────────────────────────────────
+    const shadow = ctx.createRadialGradient(cx, cy, R * 0.6, cx, cy, R + 3);
+    shadow.addColorStop(0, 'rgba(0,0,0,0)');
+    shadow.addColorStop(1, 'rgba(0,0,0,0.9)');
     ctx.beginPath();
-    ctx.arc(cx, cy, r + 3, 0, Math.PI * 2);
-    ctx.fillStyle = '#0a0a0a';
+    ctx.arc(cx, cy, R + 3, 0, Math.PI * 2);
+    ctx.fillStyle = shadow;
     ctx.fill();
 
-    // Chamfered metallic body gradient
-    const bodyGrad = ctx.createRadialGradient(cx - r * 0.25, cy - r * 0.25, 0, cx, cy, r);
-    bodyGrad.addColorStop(0, '#666');
-    bodyGrad.addColorStop(0.15, '#444');
-    bodyGrad.addColorStop(0.4, '#2a2a2a');
-    bodyGrad.addColorStop(0.85, '#1a1a1a');
-    bodyGrad.addColorStop(1, '#0d0d0d');
-    ctx.beginPath();
-    ctx.arc(cx, cy, r, 0, Math.PI * 2);
-    ctx.fillStyle = bodyGrad;
-    ctx.fill();
+    // ─── Outer chamfer ring (brushed anisotropic) ──────────────────
+    for (let i = 0; i < 360; i += 3) {
+      const a = (i * Math.PI) / 180;
+      const brightness = 0.2 + 0.5 * Math.abs(Math.sin(a * 2));
+      const c = Math.round(brightness * 180);
+      ctx.beginPath();
+      ctx.arc(cx, cy, R, a, a + (3.2 * Math.PI) / 180);
+      ctx.strokeStyle = `rgb(${c},${c},${c})`;
+      ctx.lineWidth = 3;
+      ctx.stroke();
+    }
 
-    // Brushed-metal highlight ring
+    // ─── LED track (dark groove) ───────────────────────────────────
     ctx.beginPath();
-    ctx.arc(cx, cy, r, 0, Math.PI * 2);
-    const ringGrad = ctx.createLinearGradient(cx - r, cy - r, cx + r, cy + r);
-    ringGrad.addColorStop(0, '#888');
-    ringGrad.addColorStop(0.25, '#111');
-    ringGrad.addColorStop(0.5, '#aaa');
-    ringGrad.addColorStop(0.75, '#111');
-    ringGrad.addColorStop(1, '#888');
-    ctx.strokeStyle = ringGrad;
-    ctx.lineWidth = 2;
+    ctx.arc(cx, cy, R - 1.5, startAng, startAng + sweepAng);
+    ctx.strokeStyle = '#0d0d0d';
+    ctx.lineWidth = 5;
+    ctx.lineCap = 'butt';
     ctx.stroke();
 
-    // Top cap metallic gradient
-    const capGrad = ctx.createRadialGradient(cx - r * 0.3, cy - r * 0.3, r * 0.2, cx, cy, r * 0.82);
-    capGrad.addColorStop(0, '#e6e6e6');
-    capGrad.addColorStop(0.2, '#999');
-    capGrad.addColorStop(0.5, '#555');
-    capGrad.addColorStop(0.85, '#333');
-    capGrad.addColorStop(1, '#1a1a1a');
+    // ─── LED arc glow corona ──────────────────────────────────────
     ctx.beginPath();
-    ctx.arc(cx, cy, r * 0.85, 0, Math.PI * 2);
-    ctx.fillStyle = capGrad;
-    ctx.fill();
-
-    // Value arc (green LED ring)
-    const pct = Math.max(0, Math.min(1, (value - range.min) / (range.max - range.min)));
-    const startAngle = Math.PI * 0.75;
-    const endAngle = startAngle + pct * Math.PI * 1.5;
-    ctx.beginPath();
-    ctx.arc(cx, cy, r - 5, startAngle, endAngle);
-    ctx.strokeStyle = NEON_GREEN;
-    ctx.lineWidth = 3;
+    ctx.arc(cx, cy, R - 1.5, startAng, endAng);
+    ctx.strokeStyle = 'rgba(183,255,0,0.12)';
+    ctx.lineWidth = 9;
     ctx.lineCap = 'round';
-    ctx.shadowColor = NEON_GREEN;
-    ctx.shadowBlur = 10;
+    ctx.stroke();
+
+    // ─── LED arc fill ──────────────────────────────────────────────
+    ctx.beginPath();
+    ctx.arc(cx, cy, R - 1.5, startAng, endAng);
+    ctx.strokeStyle = NEON;
+    ctx.lineWidth = 3.5;
+    ctx.lineCap = 'round';
+    ctx.shadowColor = NEON;
+    ctx.shadowBlur = hovered ? 14 : 8;
     ctx.stroke();
     ctx.shadowBlur = 0;
 
-    // Indicator dot on cap
-    const ix = cx + Math.cos(endAngle) * (r * 0.55);
-    const iy = cy + Math.sin(endAngle) * (r * 0.55);
+    // ─── Main body — deep chrome radial ───────────────────────────
+    const bodyGrad = ctx.createRadialGradient(cx - R * 0.3, cy - R * 0.3, R * 0.05, cx, cy, R * 0.78);
+    bodyGrad.addColorStop(0.00, '#d4d4d4');
+    bodyGrad.addColorStop(0.08, '#888');
+    bodyGrad.addColorStop(0.25, '#3c3c3c');
+    bodyGrad.addColorStop(0.55, '#1c1c1c');
+    bodyGrad.addColorStop(0.85, '#111');
+    bodyGrad.addColorStop(1.00, '#080808');
     ctx.beginPath();
-    ctx.arc(ix, iy, 3.5, 0, Math.PI * 2);
-    const dotGrad = ctx.createRadialGradient(ix - 1, iy - 1, 0, ix, iy, 3.5);
-    dotGrad.addColorStop(0, '#fff');
-    dotGrad.addColorStop(1, '#555');
-    ctx.fillStyle = dotGrad;
+    ctx.arc(cx, cy, R * 0.78, 0, Math.PI * 2);
+    ctx.fillStyle = bodyGrad;
     ctx.fill();
-  }, [value, range, size]);
+
+    // ─── Brushed metal top ring (anisotropic horizontal bands) ────
+    const bx0 = cx - R * 0.78, bx1 = cx + R * 0.78;
+    const by0 = cy - R * 0.78, by1 = cy + R * 0.78;
+    const brushGrad = ctx.createLinearGradient(bx0, by0, bx1, by1);
+    brushGrad.addColorStop(0.00, 'rgba(255,255,255,0.00)');
+    brushGrad.addColorStop(0.15, 'rgba(255,255,255,0.08)');
+    brushGrad.addColorStop(0.30, 'rgba(255,255,255,0.00)');
+    brushGrad.addColorStop(0.45, 'rgba(255,255,255,0.06)');
+    brushGrad.addColorStop(0.60, 'rgba(255,255,255,0.00)');
+    brushGrad.addColorStop(0.75, 'rgba(255,255,255,0.05)');
+    brushGrad.addColorStop(1.00, 'rgba(255,255,255,0.00)');
+    ctx.beginPath();
+    ctx.arc(cx, cy, R * 0.78, 0, Math.PI * 2);
+    ctx.fillStyle = brushGrad;
+    ctx.fill();
+
+    // ─── Inner specular highlight (top-left catch-light) ─────────
+    const specGrad = ctx.createRadialGradient(cx - R * 0.3, cy - R * 0.32, 0, cx - R * 0.1, cy - R * 0.1, R * 0.55);
+    specGrad.addColorStop(0.00, 'rgba(255,255,255,0.55)');
+    specGrad.addColorStop(0.30, 'rgba(255,255,255,0.08)');
+    specGrad.addColorStop(1.00, 'rgba(255,255,255,0.00)');
+    ctx.beginPath();
+    ctx.arc(cx, cy, R * 0.78, 0, Math.PI * 2);
+    ctx.fillStyle = specGrad;
+    ctx.fill();
+
+    // ─── Inner rim bevel ─────────────────────────────────────────
+    ctx.beginPath();
+    ctx.arc(cx, cy, R * 0.78, 0, Math.PI * 2);
+    const rimGrad = ctx.createLinearGradient(cx - R * 0.78, cy - R * 0.78, cx + R * 0.78, cy + R * 0.78);
+    rimGrad.addColorStop(0, 'rgba(200,200,200,0.4)');
+    rimGrad.addColorStop(0.5, 'rgba(0,0,0,0.0)');
+    rimGrad.addColorStop(1, 'rgba(0,0,0,0.5)');
+    ctx.strokeStyle = rimGrad;
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // ─── Indicator line ───────────────────────────────────────────
+    const ix = cx + Math.cos(endAng) * R * 0.48;
+    const iy = cy + Math.sin(endAng) * R * 0.48;
+    const ix2 = cx + Math.cos(endAng) * R * 0.20;
+    const iy2 = cy + Math.sin(endAng) * R * 0.20;
+    ctx.beginPath();
+    ctx.moveTo(ix2, iy2);
+    ctx.lineTo(ix, iy);
+    ctx.strokeStyle = CHROME_HI;
+    ctx.lineWidth = 1.8;
+    ctx.lineCap = 'round';
+    ctx.shadowColor = 'rgba(255,255,255,0.6)';
+    ctx.shadowBlur = 4;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // ─── Indicator tip dot ────────────────────────────────────────
+    ctx.beginPath();
+    ctx.arc(ix, iy, 2.5, 0, Math.PI * 2);
+    const dotG = ctx.createRadialGradient(ix - 0.8, iy - 0.8, 0, ix, iy, 2.5);
+    dotG.addColorStop(0, '#fff');
+    dotG.addColorStop(1, NEON);
+    ctx.fillStyle = dotG;
+    ctx.shadowColor = NEON;
+    ctx.shadowBlur = 8;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // ─── Center gem ───────────────────────────────────────────────
+    const gemR = R * 0.14;
+    const gemGrad = ctx.createRadialGradient(cx - gemR * 0.4, cy - gemR * 0.4, 0, cx, cy, gemR);
+    gemGrad.addColorStop(0, 'rgba(183,255,0,0.9)');
+    gemGrad.addColorStop(0.5, 'rgba(120,200,0,0.4)');
+    gemGrad.addColorStop(1, 'rgba(0,0,0,0.8)');
+    ctx.beginPath();
+    ctx.arc(cx, cy, gemR, 0, Math.PI * 2);
+    ctx.fillStyle = gemGrad;
+    ctx.shadowColor = NEON;
+    ctx.shadowBlur = hovered ? 10 : 5;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  }, [value, range, size, hovered]);
 
   useEffect(() => { draw(); }, [draw]);
 
@@ -108,15 +187,16 @@ export const Knob: React.FC<KnobProps> = ({ value, range, label, onChange, size 
     setDragging(true);
     startYRef.current = e.clientY;
     startValRef.current = value;
+    e.preventDefault();
   };
 
   useEffect(() => {
     const handleMove = (e: MouseEvent) => {
       if (!dragging) return;
-      const delta = (startYRef.current - e.clientY) * (range.max - range.min) / 200;
-      let newVal = Math.max(range.min, Math.min(range.max, startValRef.current + delta));
-      newVal = Math.round(newVal / range.step) * range.step;
-      onChange(newVal);
+      const delta = (startYRef.current - e.clientY) * (range.max - range.min) / 220;
+      let v = Math.max(range.min, Math.min(range.max, startValRef.current + delta));
+      v = Math.round(v / range.step) * range.step;
+      onChange(v);
     };
     const handleUp = () => setDragging(false);
     if (dragging) {
@@ -132,23 +212,23 @@ export const Knob: React.FC<KnobProps> = ({ value, range, label, onChange, size 
   const display = range.displayFormat(value);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, userSelect: 'none' }}>
-      <div style={{ position: 'relative', width: size, height: size }}>
-        <canvas
-          ref={canvasRef}
-          style={{ width: size, height: size, cursor: dragging ? 'grabbing' : 'grab' }}
-          onMouseDown={handleMouseDown}
-        />
-      </div>
-      <span style={{ fontSize: 10, color: '#888', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 600 }}>
-        {label}
-      </span>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, userSelect: 'none' }}>
+      <canvas
+        ref={canvasRef}
+        style={{ width: size, height: size, cursor: dragging ? 'grabbing' : 'grab', display: 'block' }}
+        onMouseDown={handleMouseDown}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+      />
       <span style={{
-        fontSize: 11, color: NEON_GREEN, fontWeight: 700, fontVariantNumeric: 'tabular-nums',
-        textShadow: '0 0 6px rgba(183,255,0,0.4)',
-      }}>
-        {display} {range.unit}
-      </span>
+        fontSize: 9, color: '#777', textTransform: 'uppercase', letterSpacing: 1.5, fontWeight: 700,
+        textShadow: '0 1px 0 #000',
+      }}>{label}</span>
+      <span style={{
+        fontSize: 10, color: NEON, fontWeight: 800, fontVariantNumeric: 'tabular-nums',
+        textShadow: `0 0 8px rgba(183,255,0,0.5)`,
+        letterSpacing: 0.5,
+      }}>{display}<span style={{ fontSize: 8, color: 'rgba(183,255,0,0.6)', marginLeft: 2 }}>{range.unit}</span></span>
     </div>
   );
 };

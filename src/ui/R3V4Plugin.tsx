@@ -202,6 +202,10 @@ export const R3V4Plugin: React.FC = () => {
   const [audioEnabled, setAudioEnabled] = useState(false);
   // True until the user has successfully started audio (shows the unlock banner)
   const [needsFirstGesture, setNeedsFirstGesture] = useState(true);
+  // True when AudioContext creation failed outright (unsupported / permanently blocked).
+  // Distinct from needsFirstGesture so we can show an actionable error instead of
+  // the "click to enable" prompt (which would be misleading — clicking won't help).
+  const [audioBlocked, setAudioBlocked] = useState(false);
   // Whether the user has previously consented to audio (persisted in localStorage)
   const [hasStoredConsent] = useState(() => localStorage.getItem(AUDIO_CONSENT_KEY) === '1');
   const [audioStatus, setAudioStatus] = useState('Audio off');
@@ -276,7 +280,12 @@ export const R3V4Plugin: React.FC = () => {
       setInputSource(e.getInputSource());
       applyAudioRunningState(running);
     } else {
-      setAudioStatus('Audio failed');
+      // Initialization failed outright — AudioContext couldn't be created or the
+      // worklet couldn't load. This is different from "waiting for a gesture":
+      // clicking again won't help. Show an actionable error and stop the banner.
+      setAudioBlocked(true);
+      setNeedsFirstGesture(false);
+      setAudioStatus('Audio unavailable');
       store.setProcessing(false);
     }
   }, [inputSource, applyAudioRunningState, store]);
@@ -319,7 +328,8 @@ export const R3V4Plugin: React.FC = () => {
   // showAudioBanner is ONLY true while awaiting the very first user gesture (browser autoplay).
   // It must NOT re-activate when the user intentionally powers audio off — that would cause any
   // subsequent click to silently restart audio against the user's will.
-  const showAudioBanner = needsFirstGesture;
+  // Also suppress it if audio is fully blocked — that banner has its own UI.
+  const showAudioBanner = needsFirstGesture && !audioBlocked;
 
   // Auto-unlock: attach gesture listener(s) while the banner is showing.
   // Returning users (hasStoredConsent) get mousedown+keydown so any interaction
@@ -451,6 +461,55 @@ export const R3V4Plugin: React.FC = () => {
           <span style={{ fontSize: 8.5, color: 'rgba(183,255,0,0.5)', letterSpacing: 1 }}>
             — browser autoplay policy requires a user gesture —
           </span>
+        </div>
+      )}
+
+      {/* ── AUDIO BLOCKED / UNAVAILABLE BANNER ──────────────────────── */}
+      {/* Shown when AudioContext creation failed outright — clicking again       */}
+      {/* won't fix it, so we give the user an actionable fix instead.           */}
+      {audioBlocked && (
+        <div
+          style={{
+            position: 'relative', zIndex: 200,
+            background: 'linear-gradient(90deg, rgba(220,50,50,0.18), rgba(0,0,0,0.90), rgba(220,50,50,0.18))',
+            borderBottom: '1px solid rgba(220,80,80,0.45)',
+            borderRadius: '14px 14px 0 0',
+            padding: '10px 22px',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
+            backdropFilter: 'blur(10px)',
+          }}
+        >
+          <span style={{ fontSize: 16, lineHeight: 1 }}>🔇</span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'flex-start' }}>
+            <span style={{
+              fontSize: 10, color: '#ff6b6b', fontWeight: 700,
+              letterSpacing: 2, textTransform: 'uppercase',
+              textShadow: '0 0 10px rgba(255,80,80,0.5)',
+            }}>
+              Audio blocked by browser
+            </span>
+            <span style={{ fontSize: 8.5, color: 'rgba(255,140,140,0.65)', letterSpacing: 0.8 }}>
+              Allow audio in your browser settings, then reload the page
+            </span>
+          </div>
+          <button
+            onClick={() => window.location.reload()}
+            style={{
+              marginLeft: 8,
+              background: 'rgba(220,50,50,0.25)',
+              border: '1px solid rgba(220,80,80,0.5)',
+              borderRadius: 5,
+              color: '#ff9999',
+              fontSize: 9,
+              fontWeight: 700,
+              letterSpacing: 1.5,
+              padding: '5px 12px',
+              cursor: 'pointer',
+              textTransform: 'uppercase',
+            }}
+          >
+            Reload
+          </button>
         </div>
       )}
 

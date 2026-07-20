@@ -15,8 +15,8 @@
     "build:processor": "esbuild src/dsp/R3V4Processor.ts --bundle --outfile=public/r3v4-processor.js --format=esm --target=es2020 --minify",
     "lint": "eslint src --ext .ts,.tsx",
     "typecheck": "tsc --noEmit",
-    "test": "echo 'No test runner installed. See follow-up task #2.' && exit 1",
-    "test:ui": "echo 'No test runner installed.' && exit 1"
+    "test": "jest --no-coverage",
+    "test:ui": "jest --no-coverage --verbose"
   },
   "dependencies": {
     "@types/jest": "^30.0.0",
@@ -35,6 +35,8 @@
     "@typescript-eslint/parser": "^7.15.0",
     "@vitejs/plugin-react": "^4.3.1",
     "eslint": "^8.57.0",
+    "jest-canvas-mock": "^2.5.8",
+    "jest-environment-jsdom": "^30.4.1",
     "typescript": "^5.5.3",
     "vite": "^5.3.3"
   },

@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
-exports[`Knob canvas rendering renders correctly at maximum value (100) 1`] = `
+exports[`Knob canvas rendering broad draw-call snapshots renders correctly at maximum value (100) 1`] = `
 [
   {
     "props": {
@@ -14290,7 +14290,7 @@ exports[`Knob canvas rendering renders correctly at maximum value (100) 1`] = `
 ]
 `;
 
-exports[`Knob canvas rendering renders correctly at midpoint value (50) 1`] = `
+exports[`Knob canvas rendering broad draw-call snapshots renders correctly at midpoint value (50) 1`] = `
 [
   {
     "props": {
@@ -28580,7 +28580,7 @@ exports[`Knob canvas rendering renders correctly at midpoint value (50) 1`] = `
 ]
 `;
 
-exports[`Knob canvas rendering renders correctly at minimum value (0) 1`] = `
+exports[`Knob canvas rendering broad draw-call snapshots renders correctly at minimum value (0) 1`] = `
 [
   {
     "props": {

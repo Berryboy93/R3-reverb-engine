@@ -8,6 +8,13 @@ export default defineConfig({
   retries: 0,
   reporter: [['list'], ['html', { open: 'never' }]],
 
+  webServer: {
+    command: 'npm run dev',
+    port: 5000,
+    reuseExistingServer: true,
+    timeout: 120_000,
+  },
+
   use: {
     baseURL: 'http://localhost:5000',
     trace: 'on-first-retry',

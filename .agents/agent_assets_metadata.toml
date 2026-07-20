@@ -18,3 +18,9 @@ id = "4dzTi4nn26szoXmpyCB9C"
 uri = "file://screenshots/r3v4-shorter-ui.jpg"
 type = "image"
 title = "R3V4 Shorter UI"
+
+[[outputs]]
+id = "RTO5UyhJul-fVfBxKBzsr"
+uri = "file://screenshots/r3v4-skin-texture.jpg"
+type = "image"
+title = "R3V4 Textured Skin"

@@ -45,7 +45,7 @@ const SectionLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 
 const InfoCard: React.FC<{ title: string; value: string; sub?: string }> = ({ title, value, sub }) => (
   <div style={{
-    background: 'linear-gradient(180deg, #1a1a1a, #111)', border: '1px solid #222',
+    background: 'rgba(26,26,26,0.75)', border: '1px solid #222',
     borderRadius: 6, padding: '8px 12px', display: 'flex', flexDirection: 'column', gap: 1, minWidth: 80,
   }}>
     <span style={{ fontSize: 8, color: '#555', textTransform: 'uppercase', letterSpacing: 1 }}>{title}</span>
@@ -178,7 +178,10 @@ export const R3V4Plugin: React.FC = () => {
       color: R3V4_COLORS.titaniumSilver,
       width: '100%', maxWidth: 1020, margin: '0 auto',
       borderRadius: 14, overflow: 'hidden',
-      background: 'linear-gradient(135deg, #111 0%, #0a0a0a 50%, #111 100%)',
+      backgroundImage: 'linear-gradient(135deg, rgba(17,17,17,0.88) 0%, rgba(10,10,10,0.92) 50%, rgba(17,17,17,0.88) 100%), url(/skin-texture.png)',
+      backgroundSize: 'cover, cover',
+      backgroundPosition: 'center, center',
+      backgroundBlendMode: 'normal, multiply',
       border: '1px solid #333',
       boxShadow: '0 0 50px rgba(183,255,0,0.06), inset 0 0 70px rgba(0,0,0,0.8)',
       position: 'relative',
@@ -191,7 +194,7 @@ export const R3V4Plugin: React.FC = () => {
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         padding: '8px 20px',
-        background: 'linear-gradient(90deg, #0d0d0d, #161616, #0d0d0d)',
+        background: 'linear-gradient(90deg, rgba(13,13,13,0.92), rgba(22,22,22,0.92), rgba(13,13,13,0.92))',
         borderBottom: '1px solid #222',
         position: 'relative',
       }}>
@@ -270,7 +273,7 @@ export const R3V4Plugin: React.FC = () => {
       </div>
 
       {/* PRESET BAR */}
-      <div style={{ display: 'flex', alignItems: 'end', gap: 10, padding: '6px 20px', background: '#0a0a0a', borderBottom: '1px solid #1a1a1a' }}>
+      <div style={{ display: 'flex', alignItems: 'end', gap: 10, padding: '6px 20px', background: 'rgba(10,10,10,0.92)', borderBottom: '1px solid #1a1a1a' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
           <SectionLabel>Preset</SectionLabel>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -298,9 +301,9 @@ export const R3V4Plugin: React.FC = () => {
       </div>
 
       {/* MAIN BODY */}
-      <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', minHeight: 360, background: 'linear-gradient(180deg, #0d0d0d, #080808)' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', minHeight: 360, background: 'transparent' }}>
         {/* LEFT PANEL */}
-        <div style={{ padding: 10, display: 'flex', flexDirection: 'column', gap: 6, borderRight: '1px solid #1a1a1a' }}>
+        <div style={{ padding: 10, display: 'flex', flexDirection: 'column', gap: 6, borderRight: '1px solid #1a1a1a', background: 'rgba(13,13,13,0.5)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: 10, color: NEON, textTransform: 'uppercase', letterSpacing: 2, fontWeight: 700 }}>Space Visualizer</span>
             <span style={{ fontSize: 10, color: '#666' }}>{store.spaceMode.toUpperCase()}</span>
@@ -311,7 +314,7 @@ export const R3V4Plugin: React.FC = () => {
             {SPACE_MODES.map(mode => (
               <button key={mode} onClick={() => store.setSpaceMode(mode as SpaceMode)}
                 style={{
-                  background: store.spaceMode === mode ? 'linear-gradient(180deg, #1a1a1a, #111)' : '#0d0d0d',
+                  background: store.spaceMode === mode ? 'rgba(26,26,26,0.85)' : 'rgba(13,13,13,0.85)',
                   border: `1px solid ${store.spaceMode === mode ? NEON : '#222'}`,
                   color: store.spaceMode === mode ? NEON : '#666',
                   padding: '6px 0', borderRadius: 5, fontSize: 8, cursor: 'pointer', letterSpacing: 1,
@@ -324,7 +327,7 @@ export const R3V4Plugin: React.FC = () => {
 
           <button onClick={() => {}}
             style={{
-              background: 'linear-gradient(90deg, #111, #0f1a00)',
+              background: 'linear-gradient(90deg, rgba(17,17,17,0.85), rgba(15,26,0,0.85))',
               border: `1px solid ${NEON}`, color: NEON,
               padding: 10, borderRadius: 6, fontSize: 10, cursor: 'pointer', letterSpacing: 2,
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
@@ -335,11 +338,11 @@ export const R3V4Plugin: React.FC = () => {
         </div>
 
         {/* RIGHT PANEL */}
-        <div style={{ padding: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={{ padding: 10, display: 'flex', flexDirection: 'column', gap: 8, background: 'rgba(13,13,13,0.5)' }}>
           {/* 12 knobs */}
           <div style={{
             display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px 6px',
-            padding: 14, background: 'linear-gradient(180deg, #111, #0a0a0a)', borderRadius: 10,
+            padding: 14, background: 'rgba(17,17,17,0.65)', borderRadius: 10,
             border: '1px solid #1a1a1a',
           }}>
             {knobRows.map(([param, label]) => (
@@ -356,7 +359,7 @@ export const R3V4Plugin: React.FC = () => {
           {/* Mix section: faders + stereo width */}
           <div style={{
             display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1.5fr', gap: 16,
-            padding: 14, background: 'linear-gradient(180deg, #111, #0a0a0a)', borderRadius: 10,
+            padding: 14, background: 'rgba(17,17,17,0.65)', borderRadius: 10,
             border: '1px solid #1a1a1a', alignItems: 'end',
           }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'center' }}>
@@ -393,7 +396,7 @@ export const R3V4Plugin: React.FC = () => {
                   <button key={param}
                     onClick={() => handleParamChange(param, !active)}
                     style={{
-                      background: active ? 'linear-gradient(180deg, #1a1a1a, #0f1a00)' : 'linear-gradient(180deg, #111, #0a0a0a)',
+                      background: active ? 'linear-gradient(180deg, rgba(26,26,26,0.85), rgba(15,26,0,0.85))' : 'linear-gradient(180deg, rgba(17,17,17,0.85), rgba(10,10,10,0.85))',
                       border: `1px solid ${active ? NEON : '#222'}`,
                       color: active ? NEON : '#666',
                       padding: 10, borderRadius: 6, fontSize: 10, cursor: 'pointer',
@@ -413,7 +416,7 @@ export const R3V4Plugin: React.FC = () => {
 
       {/* BOTTOM INFO PANEL */}
       <div style={{
-        display: 'flex', gap: 8, padding: '6px 20px', background: '#0a0a0a', borderTop: '1px solid #1a1a1a',
+        display: 'flex', gap: 8, padding: '6px 20px', background: 'rgba(10,10,10,0.82)', borderTop: '1px solid #1a1a1a',
         overflowX: 'auto',
       }}>
         <InfoCard title="Space" value={store.spaceMode.toUpperCase()} sub={store.presetName} />
@@ -426,13 +429,13 @@ export const R3V4Plugin: React.FC = () => {
       {/* PRO TIPS BAR */}
       <div style={{
         display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8,
-        padding: '6px 20px', background: 'linear-gradient(90deg, #0d0d0d, #111, #0d0d0d)', borderTop: '1px solid #1a1a1a',
+        padding: '6px 20px', background: 'rgba(13,13,13,0.82)', borderTop: '1px solid #1a1a1a',
       }}>
         {TIPS.map((tip, i) => {
           const active = i === tipIndex;
           return (
             <div key={tip.title} style={{
-              background: active ? 'linear-gradient(180deg, #1a1a1a, #0f1a00)' : '#111',
+              background: active ? 'linear-gradient(180deg, rgba(26,26,26,0.75), rgba(15,26,0,0.75))' : 'rgba(17,17,17,0.75)',
               border: `1px solid ${active ? NEON : '#222'}`, borderRadius: 6, padding: 8,
               opacity: active ? 1 : 0.6,
               boxShadow: active ? '0 0 10px rgba(183,255,0,0.08)' : 'none',
@@ -450,7 +453,7 @@ export const R3V4Plugin: React.FC = () => {
       {/* STATUS BAR */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '6px 20px', background: '#080808', borderTop: '1px solid #1a1a1a',
+        padding: '6px 20px', background: 'rgba(8,8,8,0.82)', borderTop: '1px solid #1a1a1a',
       }}>
         <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
           <Meter level={inputLevel} label="Input" />
@@ -468,7 +471,7 @@ export const R3V4Plugin: React.FC = () => {
       {/* FOOTER */}
       <div style={{
         display: 'flex', flexDirection: 'column', gap: 8,
-        padding: '10px 20px', background: 'linear-gradient(90deg, #0a0a0a, #111, #0a0a0a)', borderTop: '1px solid #222',
+        padding: '10px 20px', background: 'rgba(10,10,10,0.82)', borderTop: '1px solid #222',
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -493,7 +496,7 @@ export const R3V4Plugin: React.FC = () => {
               }}>
               <div style={{
                 width: 32, height: 32, borderRadius: '50%',
-                background: 'linear-gradient(180deg, #1a1a1a, #111)', border: '1px solid #333',
+                background: 'rgba(26,26,26,0.85)', border: '1px solid #333',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 boxShadow: '0 0 6px rgba(183,255,0,0.05)',
               }}>

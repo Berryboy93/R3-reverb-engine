@@ -182,15 +182,16 @@ export const Knob: React.FC<KnobProps> = ({ value, range, label, onChange, size 
 
   useEffect(() => { draw(); }, [draw]);
 
-  const handleMouseDown = (e: React.MouseEvent) => {
+  const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
     setDragging(true);
     startYRef.current = e.clientY;
     startValRef.current = value;
+    (e.currentTarget as HTMLCanvasElement).setPointerCapture(e.pointerId);
     e.preventDefault();
   };
 
   useEffect(() => {
-    const handleMove = (e: MouseEvent) => {
+    const handleMove = (e: PointerEvent) => {
       if (!dragging) return;
       const delta = (startYRef.current - e.clientY) * (range.max - range.min) / 220;
       let v = Math.max(range.min, Math.min(range.max, startValRef.current + delta));
@@ -199,12 +200,12 @@ export const Knob: React.FC<KnobProps> = ({ value, range, label, onChange, size 
     };
     const handleUp = () => setDragging(false);
     if (dragging) {
-      window.addEventListener('mousemove', handleMove);
-      window.addEventListener('mouseup', handleUp);
+      window.addEventListener('pointermove', handleMove);
+      window.addEventListener('pointerup', handleUp);
     }
     return () => {
-      window.removeEventListener('mousemove', handleMove);
-      window.removeEventListener('mouseup', handleUp);
+      window.removeEventListener('pointermove', handleMove);
+      window.removeEventListener('pointerup', handleUp);
     };
   }, [dragging, range, onChange]);
 
@@ -215,7 +216,7 @@ export const Knob: React.FC<KnobProps> = ({ value, range, label, onChange, size 
       <canvas
         ref={canvasRef}
         style={{ width: size, height: size, cursor: dragging ? 'grabbing' : 'grab', display: 'block' }}
-        onMouseDown={handleMouseDown}
+        onPointerDown={handlePointerDown}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
       />

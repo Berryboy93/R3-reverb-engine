@@ -24,3 +24,9 @@ id = "RTO5UyhJul-fVfBxKBzsr"
 uri = "file://screenshots/r3v4-skin-texture.jpg"
 type = "image"
 title = "R3V4 Textured Skin"
+
+[[outputs]]
+id = "dzqLXYF3ZmAsq4ojoyPVH"
+uri = "file://screenshots/r3v4-skin-fixed.jpg"
+type = "image"
+title = "R3V4 Skin — Fixed"

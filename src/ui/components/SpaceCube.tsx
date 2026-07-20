@@ -128,5 +128,5 @@ export const SpaceCube: React.FC<SpaceCubeProps> = ({ size, decay, particleCount
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return <canvas ref={canvasRef} width={320} height={150} style={{ width: '100%', height: 150, borderRadius: 10 }} />;
+  return <canvas ref={canvasRef} width={320} height={210} style={{ width: '100%', height: 210, borderRadius: 10 }} />;
 };

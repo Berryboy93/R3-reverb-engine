@@ -18,6 +18,12 @@ export const R3V4_COLORS = {
   warning: '#FFD700' as const,
 } as const;
 
+// ─── Brand Typography (R3 Native standard: Bebas Neue display, Montserrat body) ─
+export const R3V4_FONTS = {
+  display: "'Bebas Neue', 'Montserrat', system-ui, sans-serif" as const,
+  body: "'Montserrat', system-ui, -apple-system, sans-serif" as const,
+} as const;
+
 // ─── Space Modes ────────────────────────────────────────────────────────────
 export type SpaceMode =
   | 'Hall'

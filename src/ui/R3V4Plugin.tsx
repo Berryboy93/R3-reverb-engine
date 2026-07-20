@@ -1,6 +1,19 @@
+/**
+ * @component R3V4Plugin
+ * @origin Replit
+ * @replit-project R3V4 Reverb Engine (Replit prototype)
+ * @integrated 2026-07-20
+ * @integrated-by r3v
+ * @tier All
+ * @llpte-connected false
+ * @vcm-connected false
+ * @plugin-host-connected false
+ * @audit-status Phase10
+ * @deferred-findings none
+ */
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { useR3V4Store } from '../lib/store';
-import { R3V4_COLORS, PARAMETER_RANGES, SPACE_MODES, SpaceMode } from '../types/reverb';
+import { R3V4_COLORS, R3V4_FONTS, PARAMETER_RANGES, SPACE_MODES, SpaceMode } from '../types/reverb';
 import { FACTORY_PRESETS } from '../lib/presets';
 import { R3V4AudioEngine, InputSource } from '../lib/audioEngine';
 import { Knob } from './components/Knob';
@@ -130,10 +143,44 @@ const ASIBadge: React.FC<{ icon: string; label: string; active?: boolean }> = ({
 /* ─── Section label ─────────────────────────────────────────────────── */
 const SectionLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <span style={{
-    fontSize: 8.5, color: '#4a4a4a', textTransform: 'uppercase', letterSpacing: 2.5, fontWeight: 700,
+    fontFamily: R3V4_FONTS.display,
+    fontSize: 10, color: '#4a4a4a', textTransform: 'uppercase', letterSpacing: 2.5,
     textShadow: '0 1px 0 rgba(0,0,0,0.8)',
   }}>{children}</span>
 );
+
+/* ─── Collapsible section (secondary controls; collapsing never alters state) ── */
+const CollapsibleSection: React.FC<{
+  title: string;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}> = ({ title, defaultOpen = true, children }) => {
+  const [open, setOpen] = useState(defaultOpen);
+  const contentId = `r3v4-section-${title.toLowerCase().replace(/\s+/g, '-')}`;
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+      <button
+        onClick={() => setOpen(o => !o)}
+        aria-expanded={open}
+        aria-controls={contentId}
+        style={{
+          display: 'flex', alignItems: 'center', gap: 7,
+          background: 'transparent', border: 'none', cursor: 'pointer',
+          padding: '2px 0', textAlign: 'left', width: 'fit-content',
+        }}
+      >
+        <span style={{
+          fontSize: 8, color: NEON, opacity: 0.7, lineHeight: 1,
+          transform: open ? 'rotate(90deg)' : 'rotate(0deg)',
+          transition: 'transform 0.18s ease', display: 'inline-block',
+        }}>▶</span>
+        <SectionLabel>{title}</SectionLabel>
+      </button>
+      {/* Content stays mounted when collapsed so no control state is lost */}
+      <div id={contentId} style={{ display: open ? 'block' : 'none' }}>{children}</div>
+    </div>
+  );
+};
 
 /* ─── Info chip ─────────────────────────────────────────────────────── */
 const InfoChip: React.FC<{ title: string; value: string; sub?: string }> = ({ title, value, sub }) => (
@@ -409,7 +456,7 @@ export const R3V4Plugin: React.FC = () => {
 
   return (
     <div style={{
-      fontFamily: "'SF Pro Display', 'Inter', system-ui, sans-serif",
+      fontFamily: R3V4_FONTS.body,
       color: R3V4_COLORS.titaniumSilver,
       width: '100%', maxWidth: 1020, margin: '0 auto',
       borderRadius: 14, overflow: 'hidden',
@@ -517,10 +564,10 @@ export const R3V4Plugin: React.FC = () => {
         </div>
       )}
 
-      {/* ── HEADER ──────────────────────────────────────────────────── */}
+      {/* ── HEADER (condensed per engineering standard) ─────────────── */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '9px 20px',
+        padding: '5px 16px',
         ...glass(0.78, 12),
         borderBottom: '1px solid rgba(255,255,255,0.05)',
         position: 'relative', zIndex: 1,
@@ -528,7 +575,7 @@ export const R3V4Plugin: React.FC = () => {
         {/* Logo block */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div style={{
-            width: 38, height: 38, borderRadius: '50%',
+            width: 32, height: 32, borderRadius: '50%',
             background: 'radial-gradient(circle at 32% 28%, #d4ff55, #7ab800)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             boxShadow: '0 0 20px rgba(183,255,0,0.45), inset 0 0 6px rgba(0,0,0,0.4)',
@@ -540,7 +587,8 @@ export const R3V4Plugin: React.FC = () => {
 
           <div>
             <div style={{
-              fontSize: 21, fontWeight: 900, color: NEON, letterSpacing: 3.5,
+              fontFamily: R3V4_FONTS.display,
+              fontSize: 22, fontWeight: 400, color: NEON, letterSpacing: 4,
               textShadow: `0 0 14px rgba(183,255,0,0.55), 0 2px 0 #111`,
               WebkitTextStroke: '0.5px rgba(255,255,255,0.12)',
               lineHeight: 1,
@@ -805,9 +853,8 @@ export const R3V4Plugin: React.FC = () => {
             </div>
           </div>
 
-          {/* Toggle buttons */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-            <SectionLabel>Global Switches</SectionLabel>
+          {/* Toggle buttons — secondary controls in a collapsible group */}
+          <CollapsibleSection title="Global Switches" defaultOpen>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 7 }}>
               {[
                 { param: 'freeze', icon: '❄', label: 'Freeze', sub: 'Infinite Hold' },
@@ -838,7 +885,7 @@ export const R3V4Plugin: React.FC = () => {
                 );
               })}
             </div>
-          </div>
+          </CollapsibleSection>
         </div>
       </div>
 
@@ -856,13 +903,14 @@ export const R3V4Plugin: React.FC = () => {
         <InfoChip title="Presets" value={`${FACTORY_PRESETS.length + store.userPresets.length}`} sub="Factory + User" />
       </div>
 
-      {/* ── PRO TIPS ─────────────────────────────────────────────────── */}
+      {/* ── PRO TIPS (collapsible; informational only) ───────────────── */}
       <div style={{
-        display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 6,
         padding: '6px 18px',
         ...glass(0.45, 10),
         borderTop: '1px solid rgba(255,255,255,0.03)', position: 'relative', zIndex: 1,
       }}>
+      <CollapsibleSection title="Pro Tips" defaultOpen={false}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 6 }}>
         {TIPS.map((tip, i) => {
           const active = i === tipIndex;
           return (
@@ -883,6 +931,8 @@ export const R3V4Plugin: React.FC = () => {
             </div>
           );
         })}
+      </div>
+      </CollapsibleSection>
       </div>
 
       {/* ── STATUS BAR ───────────────────────────────────────────────── */}

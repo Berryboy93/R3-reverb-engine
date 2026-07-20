@@ -57,6 +57,14 @@ interface R3V4Store {
 
 const MAX_HISTORY = 50;
 
+// Coalesce rapid successive edits to the SAME parameter (e.g. a knob drag)
+// into a single history entry, so undo steps between meaningful gestures
+// instead of replaying every intermediate drag value — and so a drag doesn't
+// allocate dozens of parameter-object snapshots per second.
+const HISTORY_COALESCE_MS = 800;
+let lastEditedParam: string | null = null;
+let lastEditTime = 0;
+
 function createHistoryEntry(state: Pick<R3V4Store, 'parameters' | 'spaceMode' | 'presetName'>): HistoryEntry {
   return {
     parameters: { ...state.parameters },
@@ -70,6 +78,10 @@ export const useR3V4Store = create<R3V4Store>((set, get) => ({
   spaceMode: 'Hall',
   presetName: 'Init — Clean Slate',
   isBypassed: false,
+  // Default FALSE (intentional): audio can't start without a user gesture,
+  // so the UI loads dimmed (42% opacity) with the unlock banner guiding the
+  // user. setProcessing(true) fires once audio actually runs. Do not change
+  // to true — a bright "active" UI over silent audio misrepresents state.
   isProcessing: false,
   cpuUsage: 0,
   latency: 2.1,
@@ -89,9 +101,22 @@ export const useR3V4Store = create<R3V4Store>((set, get) => ({
     const state = get();
     const newParams = { ...state.parameters, [param]: value };
     const newEntry = createHistoryEntry({ parameters: newParams, spaceMode: state.spaceMode, presetName: state.presetName });
+    const now = Date.now();
+    const coalesce =
+      lastEditedParam === param &&
+      now - lastEditTime < HISTORY_COALESCE_MS &&
+      state.historyIndex === state.history.length - 1 &&
+      state.history.length > 1;
+    lastEditedParam = param;
+    lastEditTime = now;
+
     const newHistory = state.history.slice(0, state.historyIndex + 1);
-    newHistory.push(newEntry);
-    if (newHistory.length > MAX_HISTORY) newHistory.shift();
+    if (coalesce) {
+      newHistory[newHistory.length - 1] = newEntry; // replace in-flight drag entry
+    } else {
+      newHistory.push(newEntry);
+      if (newHistory.length > MAX_HISTORY) newHistory.shift();
+    }
     set({ parameters: newParams, presetName: 'Custom', history: newHistory, historyIndex: newHistory.length - 1 });
   },
 

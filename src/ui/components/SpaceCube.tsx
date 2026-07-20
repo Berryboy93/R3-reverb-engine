@@ -9,18 +9,24 @@ interface SpaceCubeProps {
 export const SpaceCube: React.FC<SpaceCubeProps> = ({ size, decay, particleCount = 80 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const particlesRef = useRef<Array<{ x: number; y: number; z: number; vx: number; vy: number; vz: number; life: number }>>([]);
+  // Mirror live prop values into refs so the animation loop reads fresh values
+  // WITHOUT tearing down and restarting the rAF loop on every knob movement.
+  const sizeRef = useRef(size);
+  const decayRef = useRef(decay);
+  sizeRef.current = size;
+  decayRef.current = decay;
 
   useEffect(() => {
     particlesRef.current = Array.from({ length: particleCount }, () => ({
-      x: (Math.random() - 0.5) * size,
-      y: (Math.random() - 0.5) * size,
-      z: (Math.random() - 0.5) * size,
+      x: (Math.random() - 0.5) * sizeRef.current,
+      y: (Math.random() - 0.5) * sizeRef.current,
+      z: (Math.random() - 0.5) * sizeRef.current,
       vx: (Math.random() - 0.5) * 0.3,
       vy: (Math.random() - 0.5) * 0.3,
       vz: (Math.random() - 0.5) * 0.3,
       life: Math.random(),
     }));
-  }, [particleCount, size]);
+  }, [particleCount]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -50,6 +56,8 @@ export const SpaceCube: React.FC<SpaceCubeProps> = ({ size, decay, particleCount
     };
 
     const draw = () => {
+      const size = sizeRef.current;
+      const decay = decayRef.current;
       rotation += 0.003 + (decay / 30) * 0.002;
       const cubeSize = size * (0.6 + (size / 100) * 0.4); // cube scales with Size parameter
       const hs = cubeSize / 2;
@@ -116,7 +124,9 @@ export const SpaceCube: React.FC<SpaceCubeProps> = ({ size, decay, particleCount
 
     draw();
     return () => cancelAnimationFrame(animId);
-  }, [size, decay]);
+  // Mount-only: live values flow in through sizeRef/decayRef.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return <canvas ref={canvasRef} width={320} height={150} style={{ width: '100%', height: 150, borderRadius: 10 }} />;
 };

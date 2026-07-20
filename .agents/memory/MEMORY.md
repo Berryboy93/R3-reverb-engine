@@ -1,4 +1,4 @@
 - [Vite test runner blocked](replit-vitest-blocked.md) — `vitest` is blocked by Replit security policy in this project.
 - [TS config stale references](tsconfig-stale-references.md) — `tsconfig.json` had `vitest/globals` and an invalid `WebAudio` lib after vitest was removed.
 - [Vite HMR on Replit](vite-hmr-replit.md) — HMR needs `server.hmr: { clientPort: 443 }` in vite.config.ts; post-merge script is `scripts/post-merge.sh`.
-- [Plugin power default](plugin-power-default.md) — `isProcessing` must default to `true` in the store or the UI renders at 4% opacity on load.
+- [Plugin power default](plugin-power-default.md) — `isProcessing` must default to `false`; the 42%-dimmed load with unlock banner is intentional UX, do not "fix" it to bright.

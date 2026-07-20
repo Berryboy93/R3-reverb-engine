@@ -427,7 +427,9 @@ export const R3V4Plugin: React.FC = () => {
       {showAudioBanner && (
         <div
           style={{
-            position: 'absolute', top: 0, left: 0, right: 0, zIndex: 200,
+            // In normal flow (not absolute) so it pushes the header down instead
+            // of overlapping the header badges/controls.
+            position: 'relative', zIndex: 200,
             background: 'linear-gradient(90deg, rgba(183,255,0,0.10), rgba(0,0,0,0.85), rgba(183,255,0,0.10))',
             borderBottom: '1px solid rgba(183,255,0,0.35)',
             borderRadius: '14px 14px 0 0',

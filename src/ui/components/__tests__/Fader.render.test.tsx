@@ -154,3 +154,103 @@ describe('Fader DOM rendering', () => {
     cleanup(container);
   });
 });
+
+// ---------------------------------------------------------------------------
+// LED zone-colour invariant tests
+//
+// The 12 LED segments are indexed 0 (top) → 11 (bottom) in DOM order.
+// Zone boundaries:
+//   indices 10–11  →  clip zone  (#ff4444)
+//   indices  8–9   →  hot zone   (#ffaa00)
+//   indices  0–7   →  neon green (#B7FF00)
+//   any inactive   →  dark       (#1a1a1a)
+//
+// These tests pin the colour at specific value thresholds so that a refactor
+// moving zone boundaries fails loudly rather than silently.
+// ---------------------------------------------------------------------------
+
+/** Return the 12 LED segment divs (top→bottom) from a rendered Fader. */
+function getLEDSegments(container: HTMLDivElement): HTMLDivElement[] {
+  const allDivs = Array.from(container.querySelectorAll<HTMLDivElement>('div'));
+  return allDivs.filter(
+    (el) => el.style.width === '3px' && el.style.height === '5px',
+  );
+}
+
+// JSDOM normalises hex colours to rgb() — define canonical expected values here
+// so a zone-boundary refactor still fails with a readable colour mismatch.
+const DARK  = 'rgb(26, 26, 26)';   // #1a1a1a  — inactive segment
+const CLIP  = 'rgb(255, 68, 68)';  // #ff4444  — clip zone
+const AMBER = 'rgb(255, 170, 0)';  // #ffaa00  — hot zone
+
+describe('Fader LED zone colours', () => {
+  // ── value = 0: every segment must be dark ──────────────────────────────
+
+  it('all 12 segments are dark (#1a1a1a) at value 0', () => {
+    const container = renderFader(0);
+    const segs = getLEDSegments(container);
+
+    expect(segs).toHaveLength(12);
+    segs.forEach((seg) => {
+      expect(seg.style.background).toBe(DARK);
+    });
+
+    cleanup(container);
+  });
+
+  // ── clip zone: indices 10–11 must be #ff4444 at value ≥ 84 ────────────
+
+  it.each([84, 92, 100])(
+    'clip-zone segments (indices 10–11) are #ff4444 at value %i',
+    (value) => {
+      const container = renderFader(value);
+      const segs = getLEDSegments(container);
+
+      expect(segs).toHaveLength(12);
+      expect(segs[10].style.background).toBe(CLIP);
+      expect(segs[11].style.background).toBe(CLIP);
+
+      cleanup(container);
+    },
+  );
+
+  // ── hot zone: indices 8–9 must be #ffaa00 at value ≥ 67 ──────────────
+
+  it.each([67, 75, 83])(
+    'hot-zone segments (indices 8–9) are #ffaa00 at value %i',
+    (value) => {
+      const container = renderFader(value);
+      const segs = getLEDSegments(container);
+
+      expect(segs).toHaveLength(12);
+      expect(segs[8].style.background).toBe(AMBER);
+      expect(segs[9].style.background).toBe(AMBER);
+
+      cleanup(container);
+    },
+  );
+
+  // ── clip-zone segments stay dark when value is below the clip threshold ─
+
+  it('clip-zone segments (indices 10–11) are dark (#1a1a1a) at value 0', () => {
+    const container = renderFader(0);
+    const segs = getLEDSegments(container);
+
+    expect(segs[10].style.background).toBe(DARK);
+    expect(segs[11].style.background).toBe(DARK);
+
+    cleanup(container);
+  });
+
+  // ── hot-zone segments stay dark when value is below the hot threshold ──
+
+  it('hot-zone segments (indices 8–9) are dark (#1a1a1a) at value 0', () => {
+    const container = renderFader(0);
+    const segs = getLEDSegments(container);
+
+    expect(segs[8].style.background).toBe(DARK);
+    expect(segs[9].style.background).toBe(DARK);
+
+    cleanup(container);
+  });
+});

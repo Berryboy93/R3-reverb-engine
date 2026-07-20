@@ -16,7 +16,8 @@
     "lint": "eslint src --ext .ts,.tsx",
     "typecheck": "tsc --noEmit",
     "test": "jest --no-coverage",
-    "test:ui": "jest --no-coverage --verbose"
+    "test:ui": "jest --no-coverage --verbose",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@types/jest": "^30.0.0",
@@ -29,6 +30,7 @@
     "zustand": "^4.5.2"
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.1",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "@typescript-eslint/eslint-plugin": "^7.15.0",

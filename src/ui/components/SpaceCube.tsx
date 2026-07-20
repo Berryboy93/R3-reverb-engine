@@ -118,5 +118,5 @@ export const SpaceCube: React.FC<SpaceCubeProps> = ({ size, decay, particleCount
     return () => cancelAnimationFrame(animId);
   }, [size, decay]);
 
-  return <canvas ref={canvasRef} width={320} height={200} style={{ width: '100%', height: 200, borderRadius: 10 }} />;
+  return <canvas ref={canvasRef} width={320} height={150} style={{ width: '100%', height: 150, borderRadius: 10 }} />;
 };

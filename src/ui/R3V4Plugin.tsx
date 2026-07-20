@@ -190,7 +190,7 @@ export const R3V4Plugin: React.FC = () => {
       {/* HEADER */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '12px 20px',
+        padding: '8px 20px',
         background: 'linear-gradient(90deg, #0d0d0d, #161616, #0d0d0d)',
         borderBottom: '1px solid #222',
         position: 'relative',
@@ -270,7 +270,7 @@ export const R3V4Plugin: React.FC = () => {
       </div>
 
       {/* PRESET BAR */}
-      <div style={{ display: 'flex', alignItems: 'end', gap: 10, padding: '10px 20px', background: '#0a0a0a', borderBottom: '1px solid #1a1a1a' }}>
+      <div style={{ display: 'flex', alignItems: 'end', gap: 10, padding: '6px 20px', background: '#0a0a0a', borderBottom: '1px solid #1a1a1a' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
           <SectionLabel>Preset</SectionLabel>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -298,9 +298,9 @@ export const R3V4Plugin: React.FC = () => {
       </div>
 
       {/* MAIN BODY */}
-      <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', minHeight: 420, background: 'linear-gradient(180deg, #0d0d0d, #080808)' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', minHeight: 360, background: 'linear-gradient(180deg, #0d0d0d, #080808)' }}>
         {/* LEFT PANEL */}
-        <div style={{ padding: 14, display: 'flex', flexDirection: 'column', gap: 10, borderRight: '1px solid #1a1a1a' }}>
+        <div style={{ padding: 10, display: 'flex', flexDirection: 'column', gap: 6, borderRight: '1px solid #1a1a1a' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: 10, color: NEON, textTransform: 'uppercase', letterSpacing: 2, fontWeight: 700 }}>Space Visualizer</span>
             <span style={{ fontSize: 10, color: '#666' }}>{store.spaceMode.toUpperCase()}</span>
@@ -335,7 +335,7 @@ export const R3V4Plugin: React.FC = () => {
         </div>
 
         {/* RIGHT PANEL */}
-        <div style={{ padding: 14, display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div style={{ padding: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
           {/* 12 knobs */}
           <div style={{
             display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px 6px',
@@ -413,7 +413,7 @@ export const R3V4Plugin: React.FC = () => {
 
       {/* BOTTOM INFO PANEL */}
       <div style={{
-        display: 'flex', gap: 8, padding: '10px 20px', background: '#0a0a0a', borderTop: '1px solid #1a1a1a',
+        display: 'flex', gap: 8, padding: '6px 20px', background: '#0a0a0a', borderTop: '1px solid #1a1a1a',
         overflowX: 'auto',
       }}>
         <InfoCard title="Space" value={store.spaceMode.toUpperCase()} sub={store.presetName} />
@@ -426,7 +426,7 @@ export const R3V4Plugin: React.FC = () => {
       {/* PRO TIPS BAR */}
       <div style={{
         display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8,
-        padding: '10px 20px', background: 'linear-gradient(90deg, #0d0d0d, #111, #0d0d0d)', borderTop: '1px solid #1a1a1a',
+        padding: '6px 20px', background: 'linear-gradient(90deg, #0d0d0d, #111, #0d0d0d)', borderTop: '1px solid #1a1a1a',
       }}>
         {TIPS.map((tip, i) => {
           const active = i === tipIndex;
@@ -450,7 +450,7 @@ export const R3V4Plugin: React.FC = () => {
       {/* STATUS BAR */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '10px 20px', background: '#080808', borderTop: '1px solid #1a1a1a',
+        padding: '6px 20px', background: '#080808', borderTop: '1px solid #1a1a1a',
       }}>
         <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
           <Meter level={inputLevel} label="Input" />
@@ -467,8 +467,8 @@ export const R3V4Plugin: React.FC = () => {
 
       {/* FOOTER */}
       <div style={{
-        display: 'flex', flexDirection: 'column', gap: 10,
-        padding: '14px 20px', background: 'linear-gradient(90deg, #0a0a0a, #111, #0a0a0a)', borderTop: '1px solid #222',
+        display: 'flex', flexDirection: 'column', gap: 8,
+        padding: '10px 20px', background: 'linear-gradient(90deg, #0a0a0a, #111, #0a0a0a)', borderTop: '1px solid #222',
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>

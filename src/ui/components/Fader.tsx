@@ -40,8 +40,8 @@ export const Fader: React.FC<FaderProps> = ({ value, label, onChange }) => {
   const segments = [0, 20, 40, 60, 80, 100];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, userSelect: 'none' }}>
-      <div style={{ display: 'flex', gap: 4, alignItems: 'stretch', height: 90 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, userSelect: 'none' }}>
+      <div style={{ display: 'flex', gap: 4, alignItems: 'stretch', height: 70 }}>
         {/* Left LED segment strip */}
         <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '4px 0' }}>
           {segments.map((seg, i) => {
@@ -60,7 +60,7 @@ export const Fader: React.FC<FaderProps> = ({ value, label, onChange }) => {
         <div
           ref={trackRef}
           style={{
-            width: 26, height: 90,
+            width: 24, height: 70,
             background: 'linear-gradient(90deg, #0a0a0a, #151515, #0a0a0a)',
             borderRadius: 8, position: 'relative', overflow: 'hidden',
             border: '1px solid #222', cursor: 'ns-resize',

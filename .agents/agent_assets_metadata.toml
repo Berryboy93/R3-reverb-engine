@@ -12,3 +12,9 @@ id = "FGjhXp8IPXtqV68hni2JH"
 uri = "file://screenshots/r3v4-polished-ui.jpg"
 type = "image"
 title = "R3V4 Polished UI"
+
+[[outputs]]
+id = "4dzTi4nn26szoXmpyCB9C"
+uri = "file://screenshots/r3v4-shorter-ui.jpg"
+type = "image"
+title = "R3V4 Shorter UI"

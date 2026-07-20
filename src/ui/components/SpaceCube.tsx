@@ -20,9 +20,10 @@ interface SpaceCubeProps {
   size: number;
   decay: number;
   particleCount?: number;
+  height?: number;
 }
 
-export const SpaceCube: React.FC<SpaceCubeProps> = ({ size, decay, particleCount = 90 }) => {
+export const SpaceCube: React.FC<SpaceCubeProps> = ({ size, decay, particleCount = 90, height = 160 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const particlesRef = useRef<Array<{
     x: number; y: number; z: number;
@@ -273,8 +274,8 @@ export const SpaceCube: React.FC<SpaceCubeProps> = ({ size, decay, particleCount
     <canvas
       ref={canvasRef}
       width={320}
-      height={210}
-      style={{ width: '100%', height: 210, borderRadius: 10, display: 'block' }}
+      height={height}
+      style={{ width: '100%', height, borderRadius: 10, display: 'block' }}
     />
   );
 };

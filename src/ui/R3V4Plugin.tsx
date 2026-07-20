@@ -199,51 +199,6 @@ const SectionLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => 
   }}>{children}</span>
 );
 
-/* ─── Collapsible section (secondary controls; collapsing never alters state) ── */
-const CollapsibleSection: React.FC<{
-  title: string;
-  defaultOpen?: boolean;
-  children: React.ReactNode;
-}> = ({ title, defaultOpen = true, children }) => {
-  const [open, setOpen] = useState(defaultOpen);
-  const contentId = `r3v4-section-${title.toLowerCase().replace(/\s+/g, '-')}`;
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-      <button
-        onClick={() => setOpen(o => !o)}
-        aria-expanded={open}
-        aria-controls={contentId}
-        style={{
-          display: 'flex', alignItems: 'center', gap: 7,
-          background: 'transparent', border: 'none', cursor: 'pointer',
-          padding: '2px 0', textAlign: 'left', width: 'fit-content',
-        }}
-      >
-        <span style={{
-          fontSize: 8, color: NEON, opacity: 0.7, lineHeight: 1,
-          transform: open ? 'rotate(90deg)' : 'rotate(0deg)',
-          transition: 'transform 0.18s ease', display: 'inline-block',
-        }}>▶</span>
-        <SectionLabel>{title}</SectionLabel>
-      </button>
-      {/* Content stays mounted when collapsed so no control state is lost */}
-      <div id={contentId} style={{ display: open ? 'block' : 'none' }}>{children}</div>
-    </div>
-  );
-};
-
-/* ─── Info chip ─────────────────────────────────────────────────────── */
-const InfoChip: React.FC<{ title: string; value: string; sub?: string }> = ({ title, value, sub }) => (
-  <div style={{
-    ...glass(0.5, 6),
-    border: '1px solid rgba(255,255,255,0.06)', borderRadius: 6,
-    padding: '7px 12px', display: 'flex', flexDirection: 'column', gap: 1, minWidth: 80,
-  }}>
-    <span style={{ fontSize: 7.5, color: '#3a3a3a', textTransform: 'uppercase', letterSpacing: 1.2 }}>{title}</span>
-    <span style={{ fontSize: 12, color: NEON, fontWeight: 700 }}>{value}</span>
-    {sub && <span style={{ fontSize: 7.5, color: '#555' }}>{sub}</span>}
-  </div>
-);
 
 /* ─── Stat ──────────────────────────────────────────────────────────── */
 const Stat: React.FC<{ label: string; value: string; color?: string }> = ({ label, value, color }) => (
@@ -253,13 +208,6 @@ const Stat: React.FC<{ label: string; value: string; color?: string }> = ({ labe
   </div>
 );
 
-const TIPS = [
-  { title: 'Pre-Delay', body: 'Preserves attack transients. Increase for vocals.', icon: '⏱' },
-  { title: 'EQ the Reverb', body: 'High-pass and low-pass the reverb return.', icon: '≃' },
-  { title: 'Parallel', body: 'Blend ambience using aux buses.', icon: '∿' },
-  { title: 'Short Decays', body: 'Improve clarity for drums.', icon: '▼' },
-  { title: 'Long Decays', body: 'Create cinematic textures and pads.', icon: '▲' },
-];
 
 const FEATURES: { icon: string; label: string }[] = [
   { icon: 'AI', label: 'Smart AI' },
@@ -278,8 +226,6 @@ const CATEGORIES = [
   { key: 'Master', label: 'Master', icon: 'M' },
 ];
 
-const FORMATS = ['VST3', 'AU', 'AAX', 'STANDALONE', 'WEB'];
-const PLATFORMS = ['LINUX', 'WINDOWS', 'macOS'];
 
 const AUDIO_CONSENT_KEY = 'r3v4-audio-consent';
 
@@ -292,7 +238,6 @@ export const R3V4Plugin: React.FC = () => {
   // unlock banner (and its click-anywhere listener) doesn't re-arm and
   // silently restart audio against the user's will.
   const userPausedRef = useRef(false);
-  const [tipIndex, setTipIndex] = useState(0);
   const [inputLevel, setInputLevel] = useState(0);
   const [outputLevel, setOutputLevel] = useState(0);
   const [cpuUsage, setCpuUsage] = useState(0);
@@ -477,10 +422,6 @@ export const R3V4Plugin: React.FC = () => {
     setPresetDisplay(`${store.spaceMode.toUpperCase()} ${name.toUpperCase()}`);
   }, [store.presetName, store.spaceMode]);
 
-  useEffect(() => {
-    const iv = setInterval(() => setTipIndex(i => (i + 1) % TIPS.length), 8000);
-    return () => clearInterval(iv);
-  }, []);
 
   const handleParamChange = useCallback((param: string, value: number | boolean) => {
     store.setParameter(param as any, value);
@@ -509,6 +450,8 @@ export const R3V4Plugin: React.FC = () => {
       fontFamily: R3V4_FONTS.body,
       color: R3V4_COLORS.titaniumSilver,
       width: '100%', maxWidth: 1020, margin: '0 auto',
+      aspectRatio: '16 / 9',
+      display: 'flex', flexDirection: 'column',
       borderRadius: 14, overflow: 'hidden',
       // Skin texture base
       backgroundImage: [
@@ -759,32 +702,32 @@ export const R3V4Plugin: React.FC = () => {
       </div>
 
       {/* ── MAIN BODY ───────────────────────────────────────────────── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '258px 1fr', minHeight: 350, position: 'relative', zIndex: 1 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '258px 1fr', flex: 1, minHeight: 0, position: 'relative', zIndex: 1, overflow: 'hidden' }}>
 
         {/* LEFT PANEL — transparent glass */}
         <div style={{
-          padding: 10, display: 'flex', flexDirection: 'column', gap: 6,
+          padding: 8, display: 'flex', flexDirection: 'column', gap: 5,
           borderRight: '1px solid rgba(255,255,255,0.04)',
           ...glass(0.38, 12),
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: 9.5, color: NEON, textTransform: 'uppercase', letterSpacing: 2.5, fontWeight: 700, textShadow: `0 0 8px rgba(183,255,0,0.3)` }}>
+            <span style={{ fontSize: 9, color: NEON, textTransform: 'uppercase', letterSpacing: 2.5, fontWeight: 700, textShadow: `0 0 8px rgba(183,255,0,0.3)` }}>
               Space Visualizer
             </span>
             <span style={{
-              fontSize: 9, color: '#555', letterSpacing: 2, padding: '1px 6px',
+              fontSize: 8.5, color: '#555', letterSpacing: 2, padding: '1px 6px',
               border: '1px solid rgba(255,255,255,0.05)', borderRadius: 3,
             }}>{store.spaceMode.toUpperCase()}</span>
           </div>
 
-          {/* Cube sits on a near-transparent backing */}
+          {/* Cube */}
           <div style={{
-            borderRadius: 10, overflow: 'hidden',
+            borderRadius: 8, overflow: 'hidden',
             background: 'rgba(0,0,0,0.25)',
             border: '1px solid rgba(255,255,255,0.04)',
             backdropFilter: 'blur(6px)',
           }}>
-            <SpaceCube size={store.parameters.size} decay={store.parameters.decay} />
+            <SpaceCube size={store.parameters.size} decay={store.parameters.decay} height={160} />
           </div>
 
           {/* Space mode buttons */}
@@ -797,7 +740,7 @@ export const R3V4Plugin: React.FC = () => {
                     background: active ? 'rgba(183,255,0,0.08)' : 'rgba(0,0,0,0.3)',
                     border: `1px solid ${active ? 'rgba(183,255,0,0.4)' : 'rgba(255,255,255,0.05)'}`,
                     color: active ? NEON : '#555',
-                    padding: '5px 0', borderRadius: 4, fontSize: 7.5, cursor: 'pointer', letterSpacing: 1,
+                    padding: '4px 0', borderRadius: 3, fontSize: 7, cursor: 'pointer', letterSpacing: 1,
                     boxShadow: active ? '0 0 8px rgba(183,255,0,0.12)' : 'none',
                     backdropFilter: 'blur(4px)',
                     transition: 'all 0.15s',
@@ -815,50 +758,62 @@ export const R3V4Plugin: React.FC = () => {
                 ? 'linear-gradient(90deg, rgba(183,255,0,0.1), rgba(0,255,100,0.06), rgba(183,255,0,0.1))'
                 : 'linear-gradient(90deg, rgba(10,10,10,0.7), rgba(20,35,0,0.7))',
               border: `1px solid ${asiPulse ? 'rgba(183,255,0,0.5)' : 'rgba(183,255,0,0.2)'}`,
-              color: NEON, padding: '10px 0', borderRadius: 7, fontSize: 9.5,
+              color: NEON, padding: '7px 0', borderRadius: 6, fontSize: 9,
               cursor: 'pointer', letterSpacing: 2.5, fontWeight: 700,
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
               boxShadow: asiPulse
                 ? '0 0 18px rgba(183,255,0,0.18), inset 0 0 12px rgba(183,255,0,0.05)'
                 : '0 0 6px rgba(183,255,0,0.06)',
               backdropFilter: 'blur(6px)',
               transition: 'all 0.9s ease',
             }}>
-            <span style={{ fontSize: 14, lineHeight: 1, textShadow: `0 0 6px rgba(183,255,0,0.8)` }}>✦</span>
+            <span style={{ fontSize: 12, lineHeight: 1, textShadow: `0 0 6px rgba(183,255,0,0.8)` }}>✦</span>
             ASI SMART MODE
           </button>
 
-          {/* Neural status readout */}
-          <div style={{
-            ...glass(0.3, 8),
-            border: '1px solid rgba(255,255,255,0.04)',
-            borderRadius: 6, padding: '6px 10px',
-          }}>
-            <div style={{ fontSize: 7.5, color: '#3a3a3a', textTransform: 'uppercase', letterSpacing: 2, marginBottom: 4 }}>Neural Core</div>
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-              {['Inference', 'Diffusion', 'Spatial', 'Mastery'].map(n => (
-                <span key={n} style={{
-                  fontSize: 7, color: store.isProcessing ? NEON : '#333',
-                  border: `1px solid ${store.isProcessing ? 'rgba(183,255,0,0.2)' : 'rgba(255,255,255,0.04)'}`,
-                  borderRadius: 2, padding: '1px 5px', letterSpacing: 1,
-                  textShadow: store.isProcessing ? '0 0 5px rgba(183,255,0,0.4)' : 'none',
-                }}>{n}</span>
-              ))}
-            </div>
+          {/* Global toggle switches — compact 2×2 grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3 }}>
+            {[
+              { param: 'freeze', icon: '❄', label: 'Freeze' },
+              { param: 'ducking', icon: '▽', label: 'Ducking' },
+              { param: 'tempoSync', icon: '⌛', label: 'Tempo' },
+              { param: 'oversampling', icon: '⊕', label: '2× OS' },
+            ].map(({ param, icon, label }) => {
+              const active = store.parameters[param as keyof typeof store.parameters] as boolean;
+              return (
+                <button key={param}
+                  onClick={() => handleParamChange(param, !active)}
+                  style={{
+                    background: active
+                      ? 'linear-gradient(180deg, rgba(183,255,0,0.1), rgba(15,35,0,0.7))'
+                      : 'rgba(10,10,10,0.55)',
+                    border: `1px solid ${active ? 'rgba(183,255,0,0.35)' : 'rgba(255,255,255,0.05)'}`,
+                    color: active ? NEON : '#555',
+                    padding: '4px 0', borderRadius: 5, fontSize: 8, cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
+                    boxShadow: active ? '0 0 10px rgba(183,255,0,0.10)' : 'none',
+                    backdropFilter: 'blur(6px)',
+                    transition: 'all 0.18s',
+                  }}>
+                  <span style={{ fontSize: 10, lineHeight: 1 }}>{icon}</span>
+                  <span style={{ fontWeight: 700, letterSpacing: 0.5 }}>{label}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
 
         {/* RIGHT PANEL — light glass */}
         <div style={{
-          padding: 10, display: 'flex', flexDirection: 'column', gap: 8,
+          padding: 8, display: 'flex', flexDirection: 'column', gap: 6,
           ...glass(0.3, 8),
         }}>
           {/* 12 knobs — floating glass card */}
           <div style={{
-            display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '14px 8px',
-            padding: 14,
+            display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px',
+            padding: 10,
             ...glass(0.5, 10),
-            borderRadius: 10,
+            borderRadius: 8,
             border: '1px solid rgba(255,255,255,0.05)',
             boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04)',
           }}>
@@ -868,26 +823,27 @@ export const R3V4Plugin: React.FC = () => {
                 range={PARAMETER_RANGES[param]}
                 label={label}
                 onChange={(v) => handleParamChange(param, v)}
-                size={52}
+                size={46}
               />
             ))}
           </div>
 
           {/* Mix section — glass card */}
           <div style={{
-            display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1.6fr', gap: 16,
-            padding: 14,
+            display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1.6fr', gap: 12,
+            padding: 10,
             ...glass(0.5, 10),
-            borderRadius: 10,
+            borderRadius: 8,
             border: '1px solid rgba(255,255,255,0.05)',
             alignItems: 'flex-end',
+            flex: 1,
           }}>
             {[
               { param: 'dry', label: 'DRY', sec: 'Direct' },
               { param: 'er', label: 'ER', sec: 'Early' },
               { param: 'wet', label: 'WET', sec: 'Reverb' },
             ].map(({ param, label, sec }) => (
-              <div key={param} style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'center' }}>
+              <div key={param} style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'center' }}>
                 <SectionLabel>{sec}</SectionLabel>
                 <Fader
                   value={store.parameters[param as keyof typeof store.parameters] as number}
@@ -896,93 +852,13 @@ export const R3V4Plugin: React.FC = () => {
                 />
               </div>
             ))}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, justifyContent: 'flex-end' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, justifyContent: 'flex-end' }}>
               <SectionLabel>Imaging</SectionLabel>
               <StereoWidthSlider value={store.parameters.stereoWidth} min={0} max={200}
                 onChange={(v) => handleParamChange('stereoWidth', v)} />
             </div>
           </div>
-
-          {/* Toggle buttons — secondary controls in a collapsible group */}
-          <CollapsibleSection title="Global Switches" defaultOpen>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 7 }}>
-              {[
-                { param: 'freeze', icon: '❄', label: 'Freeze', sub: 'Infinite Hold' },
-                { param: 'ducking', icon: '▽', label: 'Ducking', sub: 'Auto-Lower' },
-                { param: 'tempoSync', icon: '⌛', label: 'Tempo Sync', sub: 'BPM Lock' },
-                { param: 'oversampling', icon: '⊕', label: 'Oversample', sub: '2× Quality' },
-              ].map(({ param, icon, label, sub }) => {
-                const active = store.parameters[param as keyof typeof store.parameters] as boolean;
-                return (
-                  <button key={param}
-                    onClick={() => handleParamChange(param, !active)}
-                    style={{
-                      background: active
-                        ? 'linear-gradient(180deg, rgba(183,255,0,0.1), rgba(15,35,0,0.7))'
-                        : 'rgba(10,10,10,0.55)',
-                      border: `1px solid ${active ? 'rgba(183,255,0,0.35)' : 'rgba(255,255,255,0.05)'}`,
-                      color: active ? NEON : '#555',
-                      padding: 9, borderRadius: 7, fontSize: 9.5, cursor: 'pointer',
-                      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
-                      boxShadow: active ? '0 0 12px rgba(183,255,0,0.12), inset 0 0 8px rgba(183,255,0,0.04)' : 'none',
-                      backdropFilter: 'blur(6px)',
-                      transition: 'all 0.18s',
-                    }}>
-                    <span style={{ fontSize: 15, lineHeight: 1 }}>{icon}</span>
-                    <span style={{ fontWeight: 700, letterSpacing: 0.5 }}>{label}</span>
-                    <span style={{ fontSize: 7.5, color: active ? 'rgba(183,255,0,0.5)' : '#333', letterSpacing: 1 }}>{sub}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </CollapsibleSection>
         </div>
-      </div>
-
-      {/* ── BOTTOM INFO PANEL ────────────────────────────────────────── */}
-      <div style={{
-        display: 'flex', gap: 7, padding: '6px 18px',
-        ...glass(0.55, 14),
-        borderTop: '1px solid rgba(255,255,255,0.04)',
-        overflowX: 'auto', position: 'relative', zIndex: 1,
-      }}>
-        <InfoChip title="Space" value={store.spaceMode.toUpperCase()} sub={store.presetName} />
-        <InfoChip title="Size" value={`${Math.round(store.parameters.size)}%`} sub="Room dimensions" />
-        <InfoChip title="High Cut" value={PARAMETER_RANGES.highCut.displayFormat(store.parameters.highCut)} sub="Tail LPF" />
-        <InfoChip title="Width" value={`${Math.round(store.parameters.stereoWidth)}%`} sub="Mono → Ultra Wide" />
-        <InfoChip title="Presets" value={`${FACTORY_PRESETS.length + store.userPresets.length}`} sub="Factory + User" />
-      </div>
-
-      {/* ── PRO TIPS (collapsible; informational only) ───────────────── */}
-      <div style={{
-        padding: '6px 18px',
-        ...glass(0.45, 10),
-        borderTop: '1px solid rgba(255,255,255,0.03)', position: 'relative', zIndex: 1,
-      }}>
-      <CollapsibleSection title="Pro Tips" defaultOpen={false}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 6 }}>
-        {TIPS.map((tip, i) => {
-          const active = i === tipIndex;
-          return (
-            <div key={tip.title} style={{
-              background: active ? 'rgba(183,255,0,0.06)' : 'rgba(0,0,0,0.25)',
-              border: `1px solid ${active ? 'rgba(183,255,0,0.25)' : 'rgba(255,255,255,0.03)'}`,
-              borderRadius: 6, padding: 7,
-              opacity: active ? 1 : 0.55,
-              backdropFilter: 'blur(4px)',
-              transition: 'all 0.6s ease',
-              boxShadow: active ? '0 0 10px rgba(183,255,0,0.06)' : 'none',
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 3 }}>
-                <span style={{ fontSize: 10, color: active ? NEON : '#555' }}>{tip.icon}</span>
-                <span style={{ fontSize: 8.5, color: active ? NEON : '#777', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1 }}>{tip.title}</span>
-              </div>
-              <span style={{ fontSize: 7.5, color: '#555', lineHeight: 1.45 }}>{tip.body}</span>
-            </div>
-          );
-        })}
-      </div>
-      </CollapsibleSection>
       </div>
 
       {/* ── STATUS BAR ───────────────────────────────────────────────── */}
@@ -1006,64 +882,26 @@ export const R3V4Plugin: React.FC = () => {
         </div>
       </div>
 
-      {/* ── FOOTER ───────────────────────────────────────────────────── */}
+      {/* ── FOOTER — category quick-load strip ───────────────────────── */}
       <div style={{
-        display: 'flex', flexDirection: 'column', gap: 7,
-        padding: '8px 18px',
+        display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 14,
+        padding: '5px 18px',
         ...glass(0.6, 14),
         borderTop: '1px solid rgba(255,255,255,0.04)', position: 'relative', zIndex: 1,
       }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ display: 'flex', gap: 6 }}>
-            {PLATFORMS.map(p => (
-              <span key={p} style={{
-                fontSize: 7.5, color: '#444',
-                border: '1px solid rgba(255,255,255,0.05)',
-                padding: '2px 6px', borderRadius: 3,
-                backdropFilter: 'blur(4px)',
-              }}>{p}</span>
-            ))}
-          </div>
-          <div style={{ display: 'flex', gap: 6 }}>
-            {FORMATS.map(f => (
-              <span key={f} style={{
-                fontSize: 7.5, color: NEON,
-                border: `1px solid rgba(183,255,0,0.2)`,
-                padding: '2px 7px', borderRadius: 3,
-                background: 'rgba(183,255,0,0.05)',
-                backdropFilter: 'blur(4px)',
-              }}>{f}</span>
-            ))}
-          </div>
-        </div>
-
-        {/* Category presets */}
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 18, alignItems: 'center' }}>
-          {CATEGORIES.map(cat => (
-            <button key={cat.key}
-              onClick={() => store.loadFirstPresetByCategory(cat.key)}
-              style={{
-                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
-                background: 'transparent', border: 'none', cursor: 'pointer',
-              }}>
-              <div style={{
-                width: 30, height: 30,
-                clipPath: 'polygon(30% 0%,70% 0%,100% 30%,100% 70%,70% 100%,30% 100%,0% 70%,0% 30%)',
-                background: 'rgba(20,20,20,0.6)',
-                border: 'none',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                backdropFilter: 'blur(4px)',
-              }}>
-                <span style={{ fontSize: 11, color: '#666' }}>{cat.icon}</span>
-              </div>
-              <span style={{ fontSize: 7.5, textTransform: 'uppercase', letterSpacing: 1.5, color: '#444' }}>{cat.label}</span>
-            </button>
-          ))}
-        </div>
-
-        <div style={{ textAlign: 'center', fontSize: 7.5, color: '#2a2a2a', letterSpacing: 2.5 }}>
-          R3 NATIVE LABS — ASI SPATIAL PROCESSOR — MASTERY EDITION
-        </div>
+        {CATEGORIES.map(cat => (
+          <button key={cat.key}
+            onClick={() => store.loadFirstPresetByCategory(cat.key)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 5,
+              background: 'transparent', border: 'none', cursor: 'pointer',
+              padding: '2px 8px', borderRadius: 3,
+            }}>
+            <span style={{ fontSize: 9, color: '#555' }}>{cat.icon}</span>
+            <span style={{ fontSize: 7.5, textTransform: 'uppercase', letterSpacing: 1.5, color: '#444' }}>{cat.label}</span>
+          </button>
+        ))}
+        <span style={{ fontSize: 7, color: '#222', letterSpacing: 2, marginLeft: 8 }}>R3 NATIVE LABS</span>
       </div>
     </div>
   );

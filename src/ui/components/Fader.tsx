@@ -1,6 +1,35 @@
 import React, { useState, useRef, useEffect } from 'react';
 
+// ─── Design tokens ──────────────────────────────────────────────────────────
+// Colour constants — changing these intentionally requires a snapshot update.
 const NEON = '#B7FF00';
+/** Inactive LED segment colour. */
+const LED_DARK = '#1a1a1a';
+/** Clip-zone LED colour (top segments). */
+const LED_CLIP = '#ff4444';
+/** Hot-zone LED colour. */
+const LED_HOT = '#ffaa00';
+
+// Geometry constants — named so that a snapshot diff names the constant that
+// moved rather than showing an unexplained pixel value.
+/** Number of LED meter segments. */
+const LED_SEGMENTS = 12;
+/** Number of top segments in the clip zone. */
+const CLIP_ZONE_SEGS = 2;
+/** Number of top segments in the clip + hot zones combined. */
+const HOT_ZONE_SEGS = 4;
+/** LED segment width (px). */
+const LED_SEG_WIDTH = 3;
+/** LED segment height (px). */
+const LED_SEG_HEIGHT = 5;
+/** Fader track width (px). */
+const TRACK_WIDTH = 22;
+/** Fader track height (px). */
+const TRACK_HEIGHT = 80;
+/** Inset of the rail / fill from the track ends (px). */
+const TRACK_INSET = 6;
+/** Thumb handle height (px). */
+const HANDLE_HEIGHT = 16;
 
 interface FaderProps {
   value: number;
@@ -41,21 +70,19 @@ export const Fader: React.FC<FaderProps> = ({ value, label, onChange }) => {
     };
   }, [dragging]);
 
-  // 12 LED segments
-  const SEGS = 12;
-  const activeSegs = Math.round((value / 100) * SEGS);
+  const activeSegs = Math.round((value / 100) * LED_SEGMENTS);
   const segColor = (i: number) => {
-    if (i >= SEGS - activeSegs) {
-      if (i >= SEGS - 2) return '#ff4444';        // clip zone
-      if (i >= SEGS - 4) return '#ffaa00';        // hot zone
+    if (i >= LED_SEGMENTS - activeSegs) {
+      if (i >= LED_SEGMENTS - CLIP_ZONE_SEGS) return LED_CLIP;
+      if (i >= LED_SEGMENTS - HOT_ZONE_SEGS) return LED_HOT;
       return NEON;
     }
-    return '#1a1a1a';
+    return LED_DARK;
   };
   const segGlow = (i: number): string => {
-    if (i < SEGS - activeSegs) return 'none';
-    if (i >= SEGS - 2) return '0 0 5px #ff4444';
-    if (i >= SEGS - 4) return '0 0 5px #ffaa00';
+    if (i < LED_SEGMENTS - activeSegs) return 'none';
+    if (i >= LED_SEGMENTS - CLIP_ZONE_SEGS) return `0 0 5px ${LED_CLIP}`;
+    if (i >= LED_SEGMENTS - HOT_ZONE_SEGS) return `0 0 5px ${LED_HOT}`;
     return `0 0 5px ${NEON}`;
   };
 
@@ -71,9 +98,9 @@ export const Fader: React.FC<FaderProps> = ({ value, label, onChange }) => {
 
         {/* LED column */}
         <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '2px 0' }}>
-          {Array.from({ length: SEGS }).map((_, i) => (
+          {Array.from({ length: LED_SEGMENTS }).map((_, i) => (
             <div key={i} style={{
-              width: 3, height: 5, borderRadius: 1,
+              width: LED_SEG_WIDTH, height: LED_SEG_HEIGHT, borderRadius: 1,
               background: segColor(i),
               boxShadow: segGlow(i),
               transition: 'background 0.04s',
@@ -85,7 +112,7 @@ export const Fader: React.FC<FaderProps> = ({ value, label, onChange }) => {
         <div
           ref={trackRef}
           style={{
-            width: 22, height: 80, position: 'relative', cursor: 'ns-resize',
+            width: TRACK_WIDTH, height: TRACK_HEIGHT, position: 'relative', cursor: 'ns-resize',
             background: 'linear-gradient(90deg, #080808 0%, #141414 40%, #0d0d0d 100%)',
             borderRadius: 6,
             border: '1px solid #2a2a2a',
@@ -97,7 +124,7 @@ export const Fader: React.FC<FaderProps> = ({ value, label, onChange }) => {
         >
           {/* Track center rail */}
           <div style={{
-            position: 'absolute', left: '50%', top: 6, bottom: 6,
+            position: 'absolute', left: '50%', top: TRACK_INSET, bottom: TRACK_INSET,
             width: 2, transform: 'translateX(-50%)',
             background: 'linear-gradient(180deg, #222, #333, #222)',
             borderRadius: 1,
@@ -105,8 +132,8 @@ export const Fader: React.FC<FaderProps> = ({ value, label, onChange }) => {
 
           {/* Fill glow */}
           <div style={{
-            position: 'absolute', bottom: 6, left: 3, right: 3,
-            height: `calc(${value}% - 6px)`,
+            position: 'absolute', bottom: TRACK_INSET, left: 3, right: 3,
+            height: `calc(${value}% - ${TRACK_INSET}px)`,
             background: `linear-gradient(0deg, ${NEON} 0%, rgba(183,255,0,0.18) 100%)`,
             borderRadius: '0 0 4px 4px',
             boxShadow: `0 0 14px rgba(183,255,0,0.3)`,
@@ -116,7 +143,7 @@ export const Fader: React.FC<FaderProps> = ({ value, label, onChange }) => {
 
           {/* Knurled aluminum handle */}
           <div style={{
-            position: 'absolute', left: -1, right: -1, height: 16,
+            position: 'absolute', left: -1, right: -1, height: HANDLE_HEIGHT,
             top: `${handlePct}%`, transform: 'translateY(-50%)',
             pointerEvents: 'none',
             borderRadius: 4,

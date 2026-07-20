@@ -6,3 +6,9 @@ id = "1p98wYNdeS7ybWNp-qhzs"
 uri = "file://screenshots/r3v4-redesign.jpg"
 type = "image"
 title = "R3V4 Redesigned UI"
+
+[[outputs]]
+id = "FGjhXp8IPXtqV68hni2JH"
+uri = "file://screenshots/r3v4-polished-ui.jpg"
+type = "image"
+title = "R3V4 Polished UI"

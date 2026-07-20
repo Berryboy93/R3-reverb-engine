@@ -40,15 +40,15 @@ export const Fader: React.FC<FaderProps> = ({ value, label, onChange }) => {
   const segments = [0, 20, 40, 60, 80, 100];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, userSelect: 'none' }}>
-      <div style={{ display: 'flex', gap: 4, alignItems: 'stretch', height: 110 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, userSelect: 'none' }}>
+      <div style={{ display: 'flex', gap: 4, alignItems: 'stretch', height: 90 }}>
         {/* Left LED segment strip */}
         <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '4px 0' }}>
           {segments.map((seg, i) => {
             const active = value >= seg;
             return (
               <div key={i} style={{
-                width: 4, height: 10, borderRadius: 1,
+                width: 4, height: 8, borderRadius: 1,
                 background: active ? NEON_GREEN : '#1a1a1a',
                 boxShadow: active ? `0 0 4px ${NEON_GREEN}` : 'none',
                 transition: 'all 0.05s',
@@ -60,7 +60,7 @@ export const Fader: React.FC<FaderProps> = ({ value, label, onChange }) => {
         <div
           ref={trackRef}
           style={{
-            width: 28, height: 110,
+            width: 26, height: 90,
             background: 'linear-gradient(90deg, #0a0a0a, #151515, #0a0a0a)',
             borderRadius: 8, position: 'relative', overflow: 'hidden',
             border: '1px solid #222', cursor: 'ns-resize',

@@ -1,22 +1,36 @@
 /**
  * R3V4 Audio Engine — Web Audio API Integration
- * Manages AudioWorklet, parameter routing, and real-time metrics
+ * Manages AudioWorklet, parameter routing, input sources, and real-time metrics
  */
 
 import { ReverbParameters, SpaceMode } from '../types/reverb';
+
+export type InputSource = 'mic' | 'test-tone';
 
 export class R3V4AudioEngine {
   private audioContext: AudioContext | null = null;
   private workletNode: AudioWorkletNode | null = null;
   private sourceNode: MediaStreamAudioSourceNode | null = null;
+  private oscillatorNode: OscillatorNode | null = null;
+  private gainNode: GainNode | null = null;
   private analyser: AnalyserNode | null = null;
   private isInitialized = false;
   private pendingParams: Partial<ReverbParameters> = {};
   private onMetricsCallback: ((metrics: any) => void) | null = null;
+  private inputSource: InputSource = 'test-tone';
+  private currentStream: MediaStream | null = null;
 
-  async initialize(stream?: MediaStream): Promise<boolean> {
+  async initialize(inputSource: InputSource = 'test-tone'): Promise<boolean> {
+    if (this.isInitialized) {
+      await this.setInputSource(inputSource);
+      await this.resume();
+      return true;
+    }
+
     try {
+      this.inputSource = inputSource;
       this.audioContext = new AudioContext({ sampleRate: 48000, latencyHint: 'interactive' });
+      await this.audioContext.resume();
 
       const processorCode = await fetch('/r3v4-processor.js').then(r => r.text());
       const blob = new Blob([processorCode], { type: 'application/javascript' });
@@ -38,15 +52,12 @@ export class R3V4AudioEngine {
         }
       };
 
-      if (stream) {
-        this.sourceNode = this.audioContext.createMediaStreamSource(stream);
-        this.sourceNode.connect(this.workletNode);
-      }
-
       this.analyser = this.audioContext.createAnalyser();
       this.analyser.fftSize = 256;
       this.workletNode.connect(this.analyser);
       this.analyser.connect(this.audioContext.destination);
+
+      await this.connectSource(inputSource);
 
       if (Object.keys(this.pendingParams).length > 0) {
         this.setParameters(this.pendingParams);
@@ -59,6 +70,61 @@ export class R3V4AudioEngine {
       console.error('R3V4 Audio Engine init failed:', err);
       return false;
     }
+  }
+
+  private async connectSource(source: InputSource): Promise<void> {
+    if (!this.audioContext || !this.workletNode) return;
+
+    // Disconnect any existing source
+    this.sourceNode?.disconnect();
+    this.oscillatorNode?.stop();
+    this.oscillatorNode?.disconnect();
+    this.gainNode?.disconnect();
+    if (this.currentStream) {
+      this.currentStream.getTracks().forEach(t => t.stop());
+      this.currentStream = null;
+    }
+
+    if (source === 'mic') {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
+        this.currentStream = stream;
+        this.sourceNode = this.audioContext.createMediaStreamSource(stream);
+        this.sourceNode.connect(this.workletNode);
+      } catch (err) {
+        console.warn('Microphone access failed, falling back to test tone:', err);
+        this.inputSource = 'test-tone';
+        this.connectTone();
+      }
+    } else {
+      this.connectTone();
+    }
+  }
+
+  private connectTone(): void {
+    if (!this.audioContext || !this.workletNode) return;
+
+    this.gainNode = this.audioContext.createGain();
+    this.gainNode.gain.value = 0.15;
+
+    this.oscillatorNode = this.audioContext.createOscillator();
+    this.oscillatorNode.type = 'sawtooth';
+    this.oscillatorNode.frequency.value = 110; // A2
+    this.oscillatorNode.connect(this.gainNode);
+    this.gainNode.connect(this.workletNode);
+    this.oscillatorNode.start();
+  }
+
+  async setInputSource(source: InputSource): Promise<void> {
+    if (this.inputSource === source && this.isRunning) return;
+    this.inputSource = source;
+    if (this.isInitialized) {
+      await this.connectSource(source);
+    }
+  }
+
+  getInputSource(): InputSource {
+    return this.inputSource;
   }
 
   setParameters(params: Partial<ReverbParameters>): void {
@@ -98,10 +164,19 @@ export class R3V4AudioEngine {
   suspend(): void { this.audioContext?.suspend(); }
   resume(): void { this.audioContext?.resume(); }
 
+  toggle(): void {
+    if (this.isRunning) this.suspend();
+    else this.resume();
+  }
+
   close(): void {
     this.sourceNode?.disconnect();
+    this.oscillatorNode?.stop();
+    this.oscillatorNode?.disconnect();
+    this.gainNode?.disconnect();
     this.workletNode?.disconnect();
     this.analyser?.disconnect();
+    this.currentStream?.getTracks().forEach(t => t.stop());
     this.audioContext?.close();
     this.isInitialized = false;
   }
@@ -109,4 +184,9 @@ export class R3V4AudioEngine {
   get isRunning(): boolean {
     return this.audioContext?.state === 'running';
   }
+
+  get initialized(): boolean {
+    return this.isInitialized;
+  }
 }
+

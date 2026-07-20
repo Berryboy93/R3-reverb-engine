@@ -7,34 +7,47 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "build:plugin": "tsc && vite build --mode plugin",
-    "build:standalone": "tsc && vite build --mode standalone",
+    "dev": "npm run build:processor && vite",
+    "build": "npm run build:processor && tsc && vite build",
+    "build:plugin": "npm run build:processor && tsc && vite build --mode plugin",
+    "build:standalone": "npm run build:processor && tsc && vite build --mode standalone",
     "build:all": "npm run build:plugin && npm run build:standalone",
+    "build:processor": "esbuild src/dsp/R3V4Processor.ts --bundle --outfile=public/r3v4-processor.js --format=esm --target=es2020 --minify",
     "lint": "eslint src --ext .ts,.tsx",
     "typecheck": "tsc --noEmit",
-    "test": "vitest",
-    "test:ui": "vitest --ui"
+    "test": "echo 'No test runner installed. See follow-up task #2.' && exit 1",
+    "test:ui": "echo 'No test runner installed.' && exit 1"
   },
   "dependencies": {
+    "@types/jest": "^30.0.0",
+    "framer-motion": "^11.0.0",
+    "jest": "^30.4.2",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "zustand": "^4.5.2",
-    "framer-motion": "^11.0.0"
+    "ts-jest": "^29.4.11",
+    "ts-node": "^10.9.2",
+    "zustand": "^4.5.2"
   },
   "devDependencies": {
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
-    "@vitejs/plugin-react": "^4.3.1",
-    "typescript": "^5.5.3",
-    "vite": "^5.3.3",
-    "eslint": "^8.57.0",
     "@typescript-eslint/eslint-plugin": "^7.15.0",
-    "@typescript-eslint/parser": "^7.15.0"
+    "@typescript-eslint/parser": "^7.15.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "eslint": "^8.57.0",
+    "typescript": "^5.5.3",
+    "vite": "^5.3.3"
   },
   "keywords": [
-    "reverb", "dsp", "audio-plugin", "spatial", "r3-native",
-    "vst3", "au", "aax", "audio-effect", "fdn"
+    "reverb",
+    "dsp",
+    "audio-plugin",
+    "spatial",
+    "r3-native",
+    "vst3",
+    "au",
+    "aax",
+    "audio-effect",
+    "fdn"
   ]
 }

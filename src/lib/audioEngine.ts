@@ -161,12 +161,16 @@ export class R3V4AudioEngine {
     return this.audioContext?.sampleRate || 48000;
   }
 
-  suspend(): void { this.audioContext?.suspend(); }
-  resume(): void { this.audioContext?.resume(); }
+  suspend(): Promise<void> { return this.audioContext?.suspend() ?? Promise.resolve(); }
+  resume(): Promise<void> { return this.audioContext?.resume() ?? Promise.resolve(); }
 
-  toggle(): void {
-    if (this.isRunning) this.suspend();
-    else this.resume();
+  async toggle(): Promise<void> {
+    if (this.isRunning) await this.suspend();
+    else await this.resume();
+  }
+
+  getContextState(): AudioContextState | null {
+    return this.audioContext?.state ?? null;
   }
 
   close(): void {

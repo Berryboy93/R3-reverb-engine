@@ -52,6 +52,7 @@ interface R3V4Store {
   reset: () => void;
   setMetrics: (metrics: Partial<Pick<R3V4Store, 'cpuUsage' | 'latency' | 'inputLevel' | 'outputLevel'>>) => void;
   setSampleRate: (sr: number) => void;
+  setProcessing: (value: boolean) => void;
 }
 
 const MAX_HISTORY = 50;
@@ -69,7 +70,7 @@ export const useR3V4Store = create<R3V4Store>((set, get) => ({
   spaceMode: 'Hall',
   presetName: 'Init — Clean Slate',
   isBypassed: false,
-  isProcessing: true,
+  isProcessing: false,
   cpuUsage: 0,
   latency: 2.1,
   sampleRate: 48000,
@@ -229,4 +230,5 @@ export const useR3V4Store = create<R3V4Store>((set, get) => ({
 
   setMetrics: (metrics) => set(metrics),
   setSampleRate: (sr) => set({ sampleRate: sr }),
+  setProcessing: (value) => set({ isProcessing: value }),
 }));

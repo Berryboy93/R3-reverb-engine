@@ -187,11 +187,14 @@ const PLATFORMS = ['LINUX', 'WINDOWS', 'macOS'];
 export const R3V4Plugin: React.FC = () => {
   const store = useR3V4Store();
   const engineRef = useRef<R3V4AudioEngine | null>(null);
+  const isUnlockingRef = useRef(false);
   const [tipIndex, setTipIndex] = useState(0);
   const [inputLevel, setInputLevel] = useState(0);
   const [outputLevel, setOutputLevel] = useState(0);
   const [cpuUsage, setCpuUsage] = useState(0);
   const [audioEnabled, setAudioEnabled] = useState(false);
+  // True until the user has successfully started audio (shows the unlock banner)
+  const [needsFirstGesture, setNeedsFirstGesture] = useState(true);
   const [audioStatus, setAudioStatus] = useState('Audio off');
   const [inputSource, setInputSource] = useState<InputSource>('test-tone');
   const [presetDisplay, setPresetDisplay] = useState('');
@@ -213,23 +216,71 @@ export const R3V4Plugin: React.FC = () => {
     return () => clearInterval(iv);
   }, []);
 
-  const enableAudio = async () => {
+  const applyAudioRunningState = useCallback((running: boolean) => {
+    setAudioEnabled(running);
+    if (running) setNeedsFirstGesture(false);
+    setAudioStatus(running
+      ? (inputSource === 'mic' ? 'Microphone' : 'Test Tone')
+      : 'Suspended — click to enable');
+    store.setProcessing(running);
+  }, [inputSource, store]);
+
+  const enableAudio = useCallback(async () => {
     const e = engineRef.current;
     if (!e) return;
     const ok = await e.initialize(inputSource);
-    if (ok) { setAudioEnabled(true); setAudioStatus(inputSource === 'mic' ? 'Microphone' : 'Test Tone'); }
-    else setAudioStatus('Audio failed');
-  };
+    if (ok) {
+      const running = e.isRunning;
+      applyAudioRunningState(running);
+    } else {
+      setAudioStatus('Audio failed');
+      store.setProcessing(false);
+    }
+  }, [inputSource, applyAudioRunningState, store]);
 
-  const toggleAudio = async () => {
+  // Unified unlock: handles both first-time init and resuming a suspended context.
+  // isUnlockingRef prevents concurrent calls from racing (e.g. banner + document listener).
+  const unlockAudio = useCallback(async () => {
+    if (isUnlockingRef.current) return;
+    isUnlockingRef.current = true;
+    try {
+      const e = engineRef.current;
+      if (!e) return;
+      if (!e.initialized) {
+        await enableAudio();
+      } else {
+        await e.resume();
+        applyAudioRunningState(e.isRunning);
+      }
+    } finally {
+      isUnlockingRef.current = false;
+    }
+  }, [enableAudio, applyAudioRunningState]);
+
+  const toggleAudio = useCallback(async () => {
     const e = engineRef.current;
     if (!e) return;
-    if (!e.initialized) { await enableAudio(); return; }
-    e.toggle();
+    if (!e.initialized) { await unlockAudio(); return; }
+    await e.toggle();
     const running = e.isRunning;
     setAudioEnabled(running);
+    if (running) setNeedsFirstGesture(false);
     setAudioStatus(running ? (inputSource === 'mic' ? 'Microphone' : 'Test Tone') : 'Paused');
-  };
+    store.setProcessing(running);
+  }, [unlockAudio, inputSource, store]);
+
+  // showAudioBanner is ONLY true while awaiting the very first user gesture (browser autoplay).
+  // It must NOT re-activate when the user intentionally powers audio off — that would cause any
+  // subsequent click to silently restart audio against the user's will.
+  const showAudioBanner = needsFirstGesture;
+
+  // Auto-unlock: attach a one-shot document click listener only during the initial gesture gate.
+  useEffect(() => {
+    if (!showAudioBanner) return;
+    const handler = () => { unlockAudio(); };
+    document.addEventListener('click', handler, { once: true });
+    return () => document.removeEventListener('click', handler);
+  }, [showAudioBanner, unlockAudio]);
 
   const changeInputSource = async (source: InputSource) => {
     setInputSource(source);
@@ -301,6 +352,35 @@ export const R3V4Plugin: React.FC = () => {
       <CircuitOverlay />
       {/* Animated neon border */}
       <EnergyBorder />
+
+      {/* ── AUTOPLAY UNLOCK BANNER ───────────────────────────────────── */}
+      {showAudioBanner && (
+        <div
+          style={{
+            position: 'absolute', top: 0, left: 0, right: 0, zIndex: 200,
+            background: 'linear-gradient(90deg, rgba(183,255,0,0.10), rgba(0,0,0,0.85), rgba(183,255,0,0.10))',
+            borderBottom: '1px solid rgba(183,255,0,0.35)',
+            borderRadius: '14px 14px 0 0',
+            padding: '9px 22px',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+            backdropFilter: 'blur(10px)',
+            pointerEvents: 'none',
+            animation: 'r3v4-pulse 2s ease-in-out infinite',
+          }}
+        >
+          <span style={{ fontSize: 13, color: NEON, lineHeight: 1 }}>⚠</span>
+          <span style={{
+            fontSize: 10, color: NEON, fontWeight: 700,
+            letterSpacing: 2.5, textTransform: 'uppercase',
+            textShadow: '0 0 10px rgba(183,255,0,0.6)',
+          }}>
+            Click anywhere to enable audio
+          </span>
+          <span style={{ fontSize: 8.5, color: 'rgba(183,255,0,0.5)', letterSpacing: 1 }}>
+            — browser autoplay policy requires a user gesture —
+          </span>
+        </div>
+      )}
 
       {/* ── HEADER ──────────────────────────────────────────────────── */}
       <div style={{
@@ -390,7 +470,7 @@ export const R3V4Plugin: React.FC = () => {
           {/* Power */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
             <span style={{ fontSize: 7.5, color: '#444', textTransform: 'uppercase', letterSpacing: 1 }}>Power</span>
-            <button onClick={store.togglePower} style={{
+            <button onClick={toggleAudio} style={{
               width: 34, height: 34, borderRadius: '50%',
               background: store.isProcessing
                 ? 'radial-gradient(circle at 30% 28%, #c8ff33, #6aaa00)'

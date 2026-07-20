@@ -15,7 +15,7 @@ export const StereoWidthSlider: React.FC<StereoWidthSliderProps> = ({ value, min
 
   const pct = (value - min) / (max - min);
 
-  const updateFromMouse = (e: MouseEvent | React.MouseEvent) => {
+  const updateFromPointer = (e: PointerEvent | React.PointerEvent) => {
     if (!trackRef.current) return;
     const rect = trackRef.current.getBoundingClientRect();
     const p = (e.clientX - rect.left) / rect.width;
@@ -23,21 +23,24 @@ export const StereoWidthSlider: React.FC<StereoWidthSliderProps> = ({ value, min
     onChange(Math.round(newVal));
   };
 
-  const handleMouseDown = (e: React.MouseEvent) => {
+  const handlePointerDown = (e: React.PointerEvent) => {
     setDragging(true);
-    updateFromMouse(e);
+    updateFromPointer(e);
+    e.preventDefault();
   };
 
   useEffect(() => {
-    const handleMove = (e: MouseEvent) => { if (dragging) updateFromMouse(e); };
+    const handleMove = (e: PointerEvent) => { if (dragging) updateFromPointer(e); };
     const handleUp = () => setDragging(false);
     if (dragging) {
-      window.addEventListener('mousemove', handleMove);
-      window.addEventListener('mouseup', handleUp);
+      window.addEventListener('pointermove', handleMove);
+      window.addEventListener('pointerup', handleUp);
+      window.addEventListener('pointercancel', handleUp);
     }
     return () => {
-      window.removeEventListener('mousemove', handleMove);
-      window.removeEventListener('mouseup', handleUp);
+      window.removeEventListener('pointermove', handleMove);
+      window.removeEventListener('pointerup', handleUp);
+      window.removeEventListener('pointercancel', handleUp);
     };
   }, [dragging]);
 
@@ -49,9 +52,9 @@ export const StereoWidthSlider: React.FC<StereoWidthSliderProps> = ({ value, min
       </div>
       <div
         ref={trackRef}
-        onMouseDown={handleMouseDown}
+        onPointerDown={handlePointerDown}
         style={{
-          height: 22, width: '100%', borderRadius: 11, cursor: 'ew-resize',
+          height: 22, width: '100%', borderRadius: 11, cursor: 'ew-resize', touchAction: 'none',
           background: 'linear-gradient(90deg, #0a0a0a, #151515, #0a0a0a)',
           border: '1px solid #222', position: 'relative',
           boxShadow: 'inset 0 0 6px rgba(0,0,0,0.8)',

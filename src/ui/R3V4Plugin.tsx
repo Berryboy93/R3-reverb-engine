@@ -190,6 +190,11 @@ export const R3V4Plugin: React.FC = () => {
   const store = useR3V4Store();
   const engineRef = useRef<R3V4AudioEngine | null>(null);
   const isUnlockingRef = useRef(false);
+  // True while the user has *intentionally* paused audio (Audio button toggle).
+  // Distinguishes deliberate pauses from browser-driven suspensions so the
+  // unlock banner (and its click-anywhere listener) doesn't re-arm and
+  // silently restart audio against the user's will.
+  const userPausedRef = useRef(false);
   const [tipIndex, setTipIndex] = useState(0);
   const [inputLevel, setInputLevel] = useState(0);
   const [outputLevel, setOutputLevel] = useState(0);
@@ -219,12 +224,20 @@ export const R3V4Plugin: React.FC = () => {
       const running = state === 'running';
       setAudioEnabled(running);
       if (!running) {
+        if (userPausedRef.current) {
+          // The user paused on purpose — do NOT re-arm the unlock banner,
+          // otherwise any subsequent click would silently restart audio.
+          setAudioStatus('Paused');
+          store.setProcessing(false);
+          return;
+        }
         // Context was suspended outside our control — show the unlock banner again
         // so the user knows a click is required to resume.
         setNeedsFirstGesture(true);
         setAudioStatus('Suspended — click to enable');
         store.setProcessing(false);
       } else {
+        userPausedRef.current = false;
         setNeedsFirstGesture(false);
         setAudioStatus(engine.getInputSource() === 'mic' ? 'Microphone' : 'Test Tone');
         store.setProcessing(true);
@@ -258,6 +271,9 @@ export const R3V4Plugin: React.FC = () => {
         // Persist consent so future loads can auto-unlock on first interaction
         localStorage.setItem(AUDIO_CONSENT_KEY, '1');
       }
+      // The engine may have silently fallen back to test tone (mic denied);
+      // sync the UI so the dropdown/status never lie about the active source.
+      setInputSource(e.getInputSource());
       applyAudioRunningState(running);
     } else {
       setAudioStatus('Audio failed');
@@ -288,13 +304,17 @@ export const R3V4Plugin: React.FC = () => {
     const e = engineRef.current;
     if (!e) return;
     if (!e.initialized) { await unlockAudio(); return; }
+    // Mark intent BEFORE suspending so the statechange handler can tell a
+    // deliberate pause apart from a browser-driven suspension.
+    if (e.isRunning) userPausedRef.current = true;
+    else userPausedRef.current = false;
     await e.toggle();
     const running = e.isRunning;
     setAudioEnabled(running);
     if (running) setNeedsFirstGesture(false);
-    setAudioStatus(running ? (inputSource === 'mic' ? 'Microphone' : 'Test Tone') : 'Paused');
+    setAudioStatus(running ? (e.getInputSource() === 'mic' ? 'Microphone' : 'Test Tone') : 'Paused');
     store.setProcessing(running);
-  }, [unlockAudio, inputSource, store]);
+  }, [unlockAudio, store]);
 
   // showAudioBanner is ONLY true while awaiting the very first user gesture (browser autoplay).
   // It must NOT re-activate when the user intentionally powers audio off — that would cause any
@@ -330,7 +350,13 @@ export const R3V4Plugin: React.FC = () => {
     setInputSource(source);
     const e = engineRef.current;
     if (!e) return;
-    if (e.initialized) { await e.setInputSource(source); setAudioStatus(source === 'mic' ? 'Microphone' : 'Test Tone'); }
+    if (e.initialized) {
+      await e.setInputSource(source);
+      // Engine may fall back to test tone when the mic is denied — reflect reality.
+      const actual = e.getInputSource();
+      setInputSource(actual);
+      setAudioStatus(actual === 'mic' ? 'Microphone' : (source === 'mic' ? 'Mic denied — test tone' : 'Test Tone'));
+    }
   };
 
   useEffect(() => { engineRef.current?.setParameters(store.parameters); }, [store.parameters]);

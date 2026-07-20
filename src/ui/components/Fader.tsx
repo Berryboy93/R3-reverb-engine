@@ -13,29 +13,31 @@ export const Fader: React.FC<FaderProps> = ({ value, label, onChange }) => {
   const [hovered, setHovered] = useState(false);
   const trackRef = useRef<HTMLDivElement>(null);
 
-  const updateFromMouse = (e: MouseEvent | React.MouseEvent) => {
+  const updateFromPointer = (e: PointerEvent | React.PointerEvent) => {
     if (!trackRef.current) return;
     const rect = trackRef.current.getBoundingClientRect();
     const pct = 1 - (e.clientY - rect.top) / rect.height;
     onChange(Math.max(0, Math.min(100, pct * 100)));
   };
 
-  const handleMouseDown = (e: React.MouseEvent) => {
+  const handlePointerDown = (e: React.PointerEvent) => {
     setDragging(true);
-    updateFromMouse(e);
+    updateFromPointer(e);
     e.preventDefault();
   };
 
   useEffect(() => {
-    const handleMove = (e: MouseEvent) => { if (dragging) updateFromMouse(e); };
+    const handleMove = (e: PointerEvent) => { if (dragging) updateFromPointer(e); };
     const handleUp = () => setDragging(false);
     if (dragging) {
-      window.addEventListener('mousemove', handleMove);
-      window.addEventListener('mouseup', handleUp);
+      window.addEventListener('pointermove', handleMove);
+      window.addEventListener('pointerup', handleUp);
+      window.addEventListener('pointercancel', handleUp);
     }
     return () => {
-      window.removeEventListener('mousemove', handleMove);
-      window.removeEventListener('mouseup', handleUp);
+      window.removeEventListener('pointermove', handleMove);
+      window.removeEventListener('pointerup', handleUp);
+      window.removeEventListener('pointercancel', handleUp);
     };
   }, [dragging]);
 
@@ -89,8 +91,9 @@ export const Fader: React.FC<FaderProps> = ({ value, label, onChange }) => {
             border: '1px solid #2a2a2a',
             boxShadow: 'inset 0 0 12px rgba(0,0,0,0.9), inset 0 1px 0 rgba(255,255,255,0.04)',
             overflow: 'hidden',
+            touchAction: 'none',
           }}
-          onMouseDown={handleMouseDown}
+          onPointerDown={handlePointerDown}
         >
           {/* Track center rail */}
           <div style={{

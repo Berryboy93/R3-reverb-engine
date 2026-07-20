@@ -3,7 +3,7 @@
  * Manages AudioWorklet, parameter routing, input sources, and real-time metrics
  */
 
-import { ReverbParameters, SpaceMode } from '../types/reverb';
+import { ReverbParameters } from '../types/reverb';
 
 export type InputSource = 'mic' | 'test-tone';
 
@@ -90,8 +90,33 @@ export class R3V4AudioEngine {
       return true;
     } catch (err) {
       console.error('R3V4 Audio Engine init failed:', err);
+      // Tear down any partially-created resources so retries start clean
+      // and we don't leak AudioContexts (browsers cap concurrent contexts).
+      this.teardown();
       return false;
     }
+  }
+
+  /** Disconnect and release all audio resources. Safe to call repeatedly. */
+  private teardown(): void {
+    try { this.sourceNode?.disconnect(); } catch { /* already disconnected */ }
+    try { this.oscillatorNode?.stop(); } catch { /* already stopped */ }
+    try { this.oscillatorNode?.disconnect(); } catch { /* already disconnected */ }
+    try { this.gainNode?.disconnect(); } catch { /* already disconnected */ }
+    try { this.workletNode?.disconnect(); } catch { /* already disconnected */ }
+    try { this.analyser?.disconnect(); } catch { /* already disconnected */ }
+    this.currentStream?.getTracks().forEach(t => t.stop());
+    this.currentStream = null;
+    this.sourceNode = null;
+    this.oscillatorNode = null;
+    this.gainNode = null;
+    this.workletNode = null;
+    this.analyser = null;
+    if (this.audioContext && this.audioContext.state !== 'closed') {
+      this.audioContext.close().catch(() => { /* best-effort */ });
+    }
+    this.audioContext = null;
+    this.isInitialized = false;
   }
 
   private async connectSource(source: InputSource): Promise<void> {
@@ -164,10 +189,6 @@ export class R3V4AudioEngine {
     });
   }
 
-  setSpaceMode(_mode: SpaceMode): void {
-    this.setParameters({} as any);
-  }
-
   getAnalyserData(): Uint8Array {
     if (!this.analyser) return new Uint8Array(128);
     const data = new Uint8Array(this.analyser.frequencyBinCount);
@@ -196,15 +217,7 @@ export class R3V4AudioEngine {
   }
 
   close(): void {
-    this.sourceNode?.disconnect();
-    this.oscillatorNode?.stop();
-    this.oscillatorNode?.disconnect();
-    this.gainNode?.disconnect();
-    this.workletNode?.disconnect();
-    this.analyser?.disconnect();
-    this.currentStream?.getTracks().forEach(t => t.stop());
-    this.audioContext?.close();
-    this.isInitialized = false;
+    this.teardown();
   }
 
   get isRunning(): boolean {

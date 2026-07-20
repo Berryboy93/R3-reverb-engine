@@ -75,9 +75,14 @@ class R3V4Processor extends AudioWorkletProcessor {
     const input = inputs[0];
     const output = outputs[0];
 
-    if (!input || !output || input.length < 2 || output.length < 2) {
+    if (!input || !output || input.length < 1 || output.length < 2) {
       return true;
     }
+
+    // Mono input: feed the single channel into both sides of the stereo engine
+    // rather than silently bypassing (some browsers deliver mic input as mono).
+    const inL = input[0];
+    const inR = input.length >= 2 ? input[1] : input[0];
 
     const numSamples = input[0].length;
     if (numSamples === 0) return true;
@@ -108,7 +113,7 @@ class R3V4Processor extends AudioWorkletProcessor {
     // FIXED: Use Date.now() — performance.now() is NOT available in AudioWorkletGlobalScope
     this.cpuStart = Date.now();
 
-    this.engine.process(input[0], input[1], output[0], output[1], numSamples);
+    this.engine.process(inL, inR, output[0], output[1], numSamples);
 
     this.blockCount++;
     if (this.blockCount >= 10) {

@@ -184,6 +184,8 @@ const CATEGORIES = [
 const FORMATS = ['VST3', 'AU', 'AAX', 'STANDALONE', 'WEB'];
 const PLATFORMS = ['LINUX', 'WINDOWS', 'macOS'];
 
+const AUDIO_CONSENT_KEY = 'r3v4-audio-consent';
+
 export const R3V4Plugin: React.FC = () => {
   const store = useR3V4Store();
   const engineRef = useRef<R3V4AudioEngine | null>(null);
@@ -195,6 +197,8 @@ export const R3V4Plugin: React.FC = () => {
   const [audioEnabled, setAudioEnabled] = useState(false);
   // True until the user has successfully started audio (shows the unlock banner)
   const [needsFirstGesture, setNeedsFirstGesture] = useState(true);
+  // Whether the user has previously consented to audio (persisted in localStorage)
+  const [hasStoredConsent] = useState(() => localStorage.getItem(AUDIO_CONSENT_KEY) === '1');
   const [audioStatus, setAudioStatus] = useState('Audio off');
   const [inputSource, setInputSource] = useState<InputSource>('test-tone');
   const [presetDisplay, setPresetDisplay] = useState('');
@@ -250,6 +254,10 @@ export const R3V4Plugin: React.FC = () => {
     const ok = await e.initialize(inputSource);
     if (ok) {
       const running = e.isRunning;
+      if (running) {
+        // Persist consent so future loads can auto-unlock on first interaction
+        localStorage.setItem(AUDIO_CONSENT_KEY, '1');
+      }
       applyAudioRunningState(running);
     } else {
       setAudioStatus('Audio failed');
@@ -293,13 +301,30 @@ export const R3V4Plugin: React.FC = () => {
   // subsequent click to silently restart audio against the user's will.
   const showAudioBanner = needsFirstGesture;
 
-  // Auto-unlock: attach a one-shot document click listener only during the initial gesture gate.
+  // Auto-unlock: attach gesture listener(s) while the banner is showing.
+  // Returning users (hasStoredConsent) get mousedown+keydown so any interaction
+  // with the plugin (e.g. touching a knob) triggers the unlock automatically.
+  // First-time users keep the original click-only behaviour.
   useEffect(() => {
     if (!showAudioBanner) return;
-    const handler = () => { unlockAudio(); };
-    document.addEventListener('click', handler, { once: true });
-    return () => document.removeEventListener('click', handler);
-  }, [showAudioBanner, unlockAudio]);
+    let fired = false;
+    const handler = () => {
+      if (fired) return;
+      fired = true;
+      unlockAudio();
+    };
+    if (hasStoredConsent) {
+      document.addEventListener('mousedown', handler, { once: true });
+      document.addEventListener('keydown', handler, { once: true });
+      return () => {
+        document.removeEventListener('mousedown', handler);
+        document.removeEventListener('keydown', handler);
+      };
+    } else {
+      document.addEventListener('click', handler, { once: true });
+      return () => document.removeEventListener('click', handler);
+    }
+  }, [showAudioBanner, unlockAudio, hasStoredConsent]);
 
   const changeInputSource = async (source: InputSource) => {
     setInputSource(source);

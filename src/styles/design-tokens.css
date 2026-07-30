@@ -1,0 +1,59 @@
+:root {
+  --acid-cyan: #00F5FF;
+  --acid-violet: #8B5CF6;
+  --acid-emerald: #10B981;
+  --acid-zinc950: #09090b;
+  --color-primary: #00F5FF;
+  --color-primary-hover: #00D9E8;
+  --color-primary-active: #00BCC4;
+  --color-primary-inverse: #09090b;
+  --color-secondary: #8B5CF6;
+  --color-secondary-hover: #7C3AED;
+  --color-secondary-active: #6D28D9;
+  --color-secondary-inverse: #FFFFFF;
+  --color-success: #10B981;
+  --color-success-hover: #059669;
+  --color-success-inverse: #FFFFFF;
+  --color-warning: #F59E0B;
+  --color-warning-hover: #D97706;
+  --color-warning-inverse: #09090b;
+  --color-error: #EF4444;
+  --color-error-hover: #DC2626;
+  --color-error-inverse: #FFFFFF;
+  --color-info: #00F5FF;
+  --color-info-hover: #00D9E8;
+  --color-info-inverse: #09090b;
+  --color-background: #09090b;
+  --color-surface: #0F0F11;
+  --color-surface-alt: #151517;
+  --color-surface-elevated: #1A1A1E;
+  --color-text-primary: #F8F8FA;
+  --color-text-secondary: #A0A0A8;
+  --color-text-tertiary: #68686E;
+  --color-text-inverse: #09090b;
+  --color-border: #2A2A2E;
+  --color-border-heavy: #3A3A3E;
+  --color-border-accent: #00F5FF;
+  --color-border-disabled: #1A1A1E;
+  --color-focus: #00F5FF;
+  --color-overlay-light: rgba(0, 245, 255, 0.1);
+  --color-overlay-medium: rgba(0, 245, 255, 0.2);
+  --color-overlay-dark: rgba(15, 15, 17, 0.8);
+  --color-overlay-darkest: rgba(9, 9, 11, 0.95);
+}
+
+:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--acid-zinc950), 0 0 0 5px var(--acid-cyan);
+}
+
+.bg-primary { background-color: var(--color-primary); }
+.bg-secondary { background-color: var(--color-secondary); }
+.bg-surface { background-color: var(--color-surface); }
+.bg-background { background-color: var(--color-background); }
+.text-primary { color: var(--color-text-primary); }
+.text-secondary { color: var(--color-text-secondary); }
+.text-tertiary { color: var(--color-text-tertiary); }
+.border-default { border-color: var(--color-border); }
+.border-accent { border-color: var(--color-border-accent); }
+

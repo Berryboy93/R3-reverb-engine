@@ -1,0 +1,55 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap");
+
+:root {
+  --font-inter: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", sans-serif;
+  --font-jetbrains-mono: "JetBrains Mono", "Courier New", monospace;
+  --font-system: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --weight-light: 300;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  --weight-extrabold: 800;
+  --type-xs-size: 11px;
+  --type-xs-lh: 1.4;
+  --type-xs-ls: 0.02em;
+  --type-sm-size: 13px;
+  --type-sm-lh: 1.5;
+  --type-sm-ls: 0.01em;
+  --type-base-size: 16px;
+  --type-base-lh: 1.6;
+  --type-base-ls: 0em;
+  --type-lg-size: 19px;
+  --type-lg-lh: 1.6;
+  --type-lg-ls: 0em;
+  --type-xl-size: 23px;
+  --type-xl-lh: 1.4;
+  --type-xl-ls: -0.01em;
+  --type-2xl-size: 28px;
+  --type-2xl-lh: 1.3;
+  --type-2xl-ls: -0.02em;
+  --type-3xl-size: 33px;
+  --type-3xl-lh: 1.2;
+  --type-3xl-ls: -0.02em;
+  --type-4xl-size: 40px;
+  --type-4xl-lh: 1.1;
+  --type-4xl-ls: -0.03em;
+}
+
+.type-h1 { font-family: var(--font-inter); font-size: var(--type-4xl-size); font-weight: var(--weight-bold); line-height: var(--type-4xl-lh); letter-spacing: var(--type-4xl-ls); }
+.type-h2 { font-family: var(--font-inter); font-size: var(--type-3xl-size); font-weight: var(--weight-bold); line-height: var(--type-3xl-lh); letter-spacing: var(--type-3xl-ls); }
+.type-h3 { font-family: var(--font-inter); font-size: var(--type-2xl-size); font-weight: var(--weight-semibold); line-height: var(--type-2xl-lh); letter-spacing: var(--type-2xl-ls); }
+.type-h4 { font-family: var(--font-inter); font-size: var(--type-xl-size); font-weight: var(--weight-semibold); line-height: var(--type-xl-lh); letter-spacing: var(--type-xl-ls); }
+.type-h5 { font-family: var(--font-inter); font-size: var(--type-lg-size); font-weight: var(--weight-semibold); line-height: var(--type-lg-lh); letter-spacing: var(--type-lg-ls); }
+.type-h6 { font-family: var(--font-inter); font-size: var(--type-base-size); font-weight: var(--weight-semibold); line-height: var(--type-base-lh); letter-spacing: var(--type-base-ls); }
+.type-body-large { font-family: var(--font-inter); font-size: var(--type-lg-size); font-weight: var(--weight-regular); line-height: var(--type-lg-lh); letter-spacing: var(--type-lg-ls); }
+.type-body { font-family: var(--font-inter); font-size: var(--type-base-size); font-weight: var(--weight-regular); line-height: var(--type-base-lh); letter-spacing: var(--type-base-ls); }
+.type-body-small { font-family: var(--font-inter); font-size: var(--type-sm-size); font-weight: var(--weight-regular); line-height: var(--type-sm-lh); letter-spacing: var(--type-sm-ls); }
+.type-label { font-family: var(--font-inter); font-size: var(--type-sm-size); font-weight: var(--weight-medium); line-height: var(--type-sm-lh); letter-spacing: var(--type-sm-ls); text-transform: uppercase; }
+.type-caption { font-family: var(--font-inter); font-size: var(--type-xs-size); font-weight: var(--weight-regular); line-height: var(--type-xs-lh); letter-spacing: var(--type-xs-ls); }
+.type-code { font-family: var(--font-jetbrains-mono); font-size: var(--type-sm-size); font-weight: var(--weight-regular); line-height: var(--type-sm-lh); letter-spacing: var(--type-sm-ls); }
+.type-code-block { font-family: var(--font-jetbrains-mono); font-size: var(--type-sm-size); font-weight: var(--weight-regular); line-height: 1.7; letter-spacing: var(--type-sm-ls); }
+.type-button { font-family: var(--font-inter); font-size: var(--type-base-size); font-weight: var(--weight-medium); line-height: var(--type-base-lh); letter-spacing: var(--type-base-ls); }
+.type-button-small { font-family: var(--font-inter); font-size: var(--type-sm-size); font-weight: var(--weight-medium); line-height: var(--type-sm-lh); letter-spacing: var(--type-sm-ls); }
+

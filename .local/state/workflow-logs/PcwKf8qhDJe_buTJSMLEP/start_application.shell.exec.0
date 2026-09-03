@@ -1,0 +1,140 @@
+
+> r3v4-reverb-engine@1.0.0 dev
+> npm run build:processor && vite
+
+
+> r3v4-reverb-engine@1.0.0 build:processor
+> esbuild src/dsp/R3V4Processor.ts --bundle --outfile=public/r3v4-processor.js --format=esm --target=es2020 --minify
+
+
+  [37mpublic/[0m[1mr3v4-processor.js[0m  [36m10.2kb[0m
+
+⚡ [32mDone in 5ms[0m
+⠙[1G[0K[33mThe CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.[39m
+
+  [32m[1mVITE[22m v5.4.21[39m  [2mready in [0m[1m163[22m[2m[0m ms[22m
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m5000[22m/[39m
+  [32m➜[39m  [1mNetwork[22m: [36mhttp://172.24.0.2:[1m5000[22m/[39m
+[2m[32m  ➜[39m[22m[2m  press [22m[1mh + enter[22m[2m to show help[22m
+[2m4:42:36 AM[22m [31m[1m[vite][22m[39m Pre-transform error: /home/runner/workspace/src/ui/R3V4Plugin.tsx: Unterminated string constant. (330:26)
+
+[0m [90m 328 |[39m           [33m<[39m[33mbutton[39m onClick[33m=[39m{() [33m=>[39m {}}
+ [90m 329 |[39m             style[33m=[39m{{
+[31m[1m>[22m[39m[90m 330 |[39m               background[33m:[39m [32m'linear-gradient(90deg, rgba(17,17,17,0.85), rgba(15,26,0,0.85)),[39m
+ [90m     |[39m                           [31m[1m^[22m[39m
+ [90m 331 |[39m               border[33m:[39m [32m`1px solid ${NEON}`[39m[33m,[39m color[33m:[39m [33mNEON[39m[33m,[39m
+ [90m 332 |[39m               padding[33m:[39m [35m10[39m[33m,[39m borderRadius[33m:[39m [35m6[39m[33m,[39m fontSize[33m:[39m [35m10[39m[33m,[39m cursor[33m:[39m [32m'pointer'[39m[33m,[39m letterSpacing[33m:[39m [35m2[39m[33m,[39m
+ [90m 333 |[39m               display[33m:[39m [32m'flex'[39m[33m,[39m alignItems[33m:[39m [32m'center'[39m[33m,[39m justifyContent[33m:[39m [32m'center'[39m[33m,[39m gap[33m:[39m [35m6[39m[33m,[39m[0m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m4:42:36 AM[22m [31m[1m[vite][22m[39m [31mInternal server error: /home/runner/workspace/src/ui/R3V4Plugin.tsx: Unterminated string constant. (330:26)
+
+[0m [90m 328 |[31m           [33m<[31m[33mbutton[31m onClick[33m=[31m{() [33m=>[31m {}}
+ [90m 329 |[31m             style[33m=[31m{{
+[31m[1m>[22m[31m[90m 330 |[31m               background[33m:[31m [32m'linear-gradient(90deg, rgba(17,17,17,0.85), rgba(15,26,0,0.85)),[31m
+ [90m     |[31m                           [31m[1m^[22m[31m
+ [90m 331 |[31m               border[33m:[31m [32m`1px solid ${NEON}`[31m[33m,[31m color[33m:[31m [33mNEON[31m[33m,[31m
+ [90m 332 |[31m               padding[33m:[31m [35m10[31m[33m,[31m borderRadius[33m:[31m [35m6[31m[33m,[31m fontSize[33m:[31m [35m10[31m[33m,[31m cursor[33m:[31m [32m'pointer'[31m[33m,[31m letterSpacing[33m:[31m [35m2[31m[33m,[31m
+ [90m 333 |[31m               display[33m:[31m [32m'flex'[31m[33m,[31m alignItems[33m:[31m [32m'center'[31m[33m,[31m justifyContent[33m:[31m [32m'center'[31m[33m,[31m gap[33m:[31m [35m6[31m[33m,[31m[0m[39m
+  Plugin: [35mvite:react-babel[39m
+  File: [36m/home/runner/workspace/src/ui/R3V4Plugin.tsx[39m:330:26
+[33m  328|            <button onClick={() => {}}
+  329|              style={{
+  330|                background: 'linear-gradient(90deg, rgba(17,17,17,0.85), rgba(15,26,0,0.85)),
+     |                            ^
+  331|                border: `1px solid ${NEON}`, color: NEON,
+  332|                padding: 10, borderRadius: 6, fontSize: 10, cursor: 'pointer', letterSpacing: 2,[39m
+      at constructor (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:365:19)
+      at TypeScriptParserMixin.raise (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:6616:19)
+      at Object.unterminated (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:5681:20)
+      at readStringContents (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:5423:16)
+      at TypeScriptParserMixin.readString (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:6515:9)
+      at TypeScriptParserMixin.getTokenFromCode (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:6275:14)
+      at TypeScriptParserMixin.getTokenFromCode (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:4809:11)
+      at TypeScriptParserMixin.getTokenFromCode (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:10004:11)
+      at TypeScriptParserMixin.nextToken (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:5799:10)
+      at TypeScriptParserMixin.next (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:5709:10)
+      at TypeScriptParserMixin.eat (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:5713:12)
+      at TypeScriptParserMixin.parseObjectProperty (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:11966:14)
+      at TypeScriptParserMixin.parseObjPropValue (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:11995:100)
+      at TypeScriptParserMixin.parseObjPropValue (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:9761:18)
+      at TypeScriptParserMixin.parsePropertyDefinition (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:11932:17)
+      at TypeScriptParserMixin.parseObjectLike (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:11849:21)
+      at TypeScriptParserMixin.parseExprAtom (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:11356:23)
+      at TypeScriptParserMixin.parseExprAtom (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:4776:20)
+      at TypeScriptParserMixin.parseExprSubscripts (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:11098:23)
+      at TypeScriptParserMixin.parseUpdate (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:11083:21)
+      at TypeScriptParserMixin.parseMaybeUnary (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:11063:23)
+      at TypeScriptParserMixin.parseMaybeUnary (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:9854:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:10916:61)
+      at TypeScriptParserMixin.parseExprOps (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:10921:23)
+      at TypeScriptParserMixin.parseMaybeConditional (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:10898:23)
+      at TypeScriptParserMixin.parseMaybeAssign (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:10848:21)
+      at TypeScriptParserMixin.parseMaybeAssign (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:9803:20)
+      at TypeScriptParserMixin.parseExpressionBase (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:10801:23)
+      at /home/runner/workspace/node_modules/@babel/parser/lib/index.js:10797:39
+      at TypeScriptParserMixin.allowInAnd (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12443:12)
+      at TypeScriptParserMixin.parseExpression (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:10797:17)
+      at TypeScriptParserMixin.jsxParseExpressionContainer (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:4644:31)
+      at TypeScriptParserMixin.jsxParseAttributeValue (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:4616:21)
+      at TypeScriptParserMixin.jsxParseAttribute (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:4665:38)
+      at TypeScriptParserMixin.jsxParseOpeningElementAfterName (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:4679:28)
+      at TypeScriptParserMixin.jsxParseOpeningElementAfterName (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:10060:18)
+      at TypeScriptParserMixin.jsxParseOpeningElementAt (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:4674:17)
+      at TypeScriptParserMixin.jsxParseElementAt (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:4698:33)
+      at TypeScriptParserMixin.jsxParseElementAt (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:4710:32)
+      at TypeScriptParserMixin.jsxParseElementAt (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:4710:32)
+      at TypeScriptParserMixin.jsxParseElementAt (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:4710:32)
+      at TypeScriptParserMixin.jsxParseElement (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:4761:17)
+      at TypeScriptParserMixin.parseExprAtom (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:4771:19)
+      at TypeScriptParserMixin.parseExprSubscripts (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:11098:23)
+      at TypeScriptParserMixin.parseUpdate (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:11083:21)
+      at TypeScriptParserMixin.parseMaybeUnary (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:11063:23)
+      at TypeScriptParserMixin.parseMaybeUnary (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:9854:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:10916:61)
+      at TypeScriptParserMixin.parseExprOps (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:10921:23)
+      at TypeScriptParserMixin.parseMaybeConditional (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:10898:23)
+⠙[1G[0K

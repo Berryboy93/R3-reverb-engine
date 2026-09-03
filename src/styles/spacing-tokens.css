@@ -1,0 +1,82 @@
+:root {
+  --spacing-2xs: 4px;
+  --spacing-xs: 8px;
+  --spacing-sm: 12px;
+  --spacing-base: 16px;
+  --spacing-md: 20px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-2xl: 40px;
+  --spacing-3xl: 48px;
+  --spacing-4xl: 56px;
+  --spacing-5xl: 64px;
+  --spacing-6xl: 72px;
+  --spacing-7xl: 80px;
+
+  --spacing-button-x: 16px;
+  --spacing-button-y: 8px;
+  --spacing-input-height: 40px;
+  --spacing-input-x: 20px;
+  --spacing-input-y: 12px;
+  --spacing-section-x: 24px;
+  --spacing-section-y: 32px;
+}
+
+/* Padding Utilities */
+.p-2xs { padding: 4px; }
+.p-xs { padding: 8px; }
+.p-sm { padding: 12px; }
+.p-base { padding: 16px; }
+.p-md { padding: 20px; }
+.p-lg { padding: 24px; }
+.p-xl { padding: 32px; }
+.p-2xl { padding: 40px; }
+
+.px-base { padding-left: 16px; padding-right: 16px; }
+.py-base { padding-top: 16px; padding-bottom: 16px; }
+
+.px-lg { padding-left: 24px; padding-right: 24px; }
+.py-lg { padding-top: 24px; padding-bottom: 24px; }
+
+.px-xl { padding-left: 32px; padding-right: 32px; }
+.py-xl { padding-top: 32px; padding-bottom: 32px; }
+
+/* Margin Utilities */
+.m-xs { margin: 8px; }
+.m-sm { margin: 12px; }
+.m-base { margin: 16px; }
+.m-lg { margin: 24px; }
+.m-xl { margin: 32px; }
+
+.mx-base { margin-left: 16px; margin-right: 16px; }
+.my-base { margin-top: 16px; margin-bottom: 16px; }
+
+.mx-lg { margin-left: 24px; margin-right: 24px; }
+.my-lg { margin-top: 24px; margin-bottom: 24px; }
+
+.mx-xl { margin-left: 32px; margin-right: 32px; }
+.my-xl { margin-top: 32px; margin-bottom: 32px; }
+
+.mb-xl { margin-bottom: 32px; }
+.mb-lg { margin-bottom: 24px; }
+.mb-md { margin-bottom: 20px; }
+.mb-base { margin-bottom: 16px; }
+
+.mt-xl { margin-top: 32px; }
+.mt-lg { margin-top: 24px; }
+.mt-base { margin-top: 16px; }
+
+/* Gap Utilities (flexbox/grid) */
+.gap-xs { gap: 8px; }
+.gap-sm { gap: 12px; }
+.gap-base { gap: 16px; }
+.gap-md { gap: 20px; }
+.gap-lg { gap: 24px; }
+.gap-xl { gap: 32px; }
+.gap-2xl { gap: 40px; }
+
+/* Semantic Utilities */
+.section { padding: var(--spacing-section-y) var(--spacing-section-x); }
+.card { padding: var(--spacing-base); }
+.card-spacious { padding: var(--spacing-lg); }
+

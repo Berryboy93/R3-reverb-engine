@@ -1,0 +1,28 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+:root {
+  --r3-bg-base: #09090c;
+  --r3-bg-surface: #121216;
+  --r3-bg-elevated: #1a1a1f;
+  --r3-border-subtle: rgba(255, 255, 255, 0.06);
+  --r3-accent: #c9a84c;
+  --r3-accent-dim: rgba(201, 168, 76, 0.12);
+  --r3-text-primary: #e8e8ea;
+  --r3-text-secondary: #8a8a8e;
+  --r3-text-tertiary: #5a5a5e;
+  --r3-danger: #c94a4a;
+  --r3-font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --r3-font-mono: 'JetBrains Mono', 'SF Mono', Monaco, 'Cascadia Code', monospace;
+}
+* { box-sizing: border-box; }
+html, body, #root {
+  margin: 0; padding: 0; width: 100%; height: 100%;
+  background: var(--r3-bg-base);
+  font-family: var(--r3-font-sans);
+  color: var(--r3-text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+@keyframes r3-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}

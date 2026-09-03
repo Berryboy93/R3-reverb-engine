@@ -1,0 +1,15 @@
+⠙[1G[0K
+> r3v4-reverb-engine@1.0.0 dev
+> npm run build:processor && vite
+
+⠙[1G[0K
+> r3v4-reverb-engine@1.0.0 build:processor
+> esbuild src/dsp/R3V4Processor.ts --bundle --outfile=public/r3v4-processor.js --format=esm --target=es2020 --minify
+
+sh: line 1: esbuild: command not found
+⠙[1G[0K⠙[1G[0K[1mnpm[22m [96mnotice[39m
+[1mnpm[22m [96mnotice[39m New [33mminor[39m version of npm available! [33m11.6.2[39m -> [34m11.18.0[39m
+[1mnpm[22m [96mnotice[39m Changelog: [34mhttps://github.com/npm/cli/releases/tag/v11.18.0[39m
+[1mnpm[22m [96mnotice[39m To update run: [4mnpm install -g npm@11.18.0[24m
+[1mnpm[22m [96mnotice[39m
+⠙[1G[0K

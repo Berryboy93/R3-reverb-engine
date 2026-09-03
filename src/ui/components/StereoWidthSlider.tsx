@@ -1,6 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
-
-const NEON_GREEN = '#B7FF00';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 
 interface StereoWidthSliderProps {
   value: number;
@@ -9,77 +7,90 @@ interface StereoWidthSliderProps {
   onChange: (value: number) => void;
 }
 
-export const StereoWidthSlider: React.FC<StereoWidthSliderProps> = ({ value, min, max, onChange }) => {
+const ACCENT = '#c9a84c';
+
+export function StereoWidthSlider({ value, min, max, onChange }: StereoWidthSliderProps) {
   const [dragging, setDragging] = useState(false);
   const trackRef = useRef<HTMLDivElement>(null);
 
   const pct = (value - min) / (max - min);
 
-  const updateFromPointer = (e: PointerEvent | React.PointerEvent) => {
+  const updateFromPointer = useCallback((clientX: number) => {
     if (!trackRef.current) return;
     const rect = trackRef.current.getBoundingClientRect();
-    const p = (e.clientX - rect.left) / rect.width;
+    const p = (clientX - rect.left) / rect.width;
     const newVal = Math.max(min, Math.min(max, min + p * (max - min)));
     onChange(Math.round(newVal));
-  };
+  }, [min, max, onChange]);
 
-  const handlePointerDown = (e: React.PointerEvent) => {
+  const handlePointerDown = useCallback((e: React.PointerEvent) => {
     setDragging(true);
-    updateFromPointer(e);
+    updateFromPointer(e.clientX);
     e.preventDefault();
-  };
+  }, [updateFromPointer]);
 
   useEffect(() => {
-    const handleMove = (e: PointerEvent) => { if (dragging) updateFromPointer(e); };
+    if (!dragging) return;
+    const handleMove = (e: PointerEvent) => updateFromPointer(e.clientX);
     const handleUp = () => setDragging(false);
-    if (dragging) {
-      window.addEventListener('pointermove', handleMove);
-      window.addEventListener('pointerup', handleUp);
-      window.addEventListener('pointercancel', handleUp);
-    }
+    window.addEventListener('pointermove', handleMove);
+    window.addEventListener('pointerup', handleUp);
+    window.addEventListener('pointercancel', handleUp);
     return () => {
       window.removeEventListener('pointermove', handleMove);
       window.removeEventListener('pointerup', handleUp);
       window.removeEventListener('pointercancel', handleUp);
     };
-  }, [dragging]);
+  }, [dragging, updateFromPointer]);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, userSelect: 'none' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9, color: '#666', textTransform: 'uppercase' }}>
+    <div
+      role="slider"
+      aria-label="Stereo Width"
+      aria-valuemin={min}
+      aria-valuemax={max}
+      aria-valuenow={value}
+      style={{ display: 'flex', flexDirection: 'column', gap: 6, userSelect: 'none' }}
+    >
+      <div style={{
+        display: 'flex', justifyContent: 'space-between',
+        fontSize: 9, color: '#5a5a5e', textTransform: 'uppercase', letterSpacing: '0.05em',
+      }}>
         <span>Mono</span>
-        <span>Ultra Wide</span>
+        <span>Wide</span>
       </div>
       <div
         ref={trackRef}
         onPointerDown={handlePointerDown}
         style={{
-          height: 22, width: '100%', borderRadius: 11, cursor: 'ew-resize', touchAction: 'none',
-          background: 'linear-gradient(90deg, #0a0a0a, #151515, #0a0a0a)',
-          border: '1px solid #222', position: 'relative',
-          boxShadow: 'inset 0 0 6px rgba(0,0,0,0.8)',
+          height: 20, width: '100%', borderRadius: 10,
+          cursor: 'ew-resize', touchAction: 'none',
+          background: '#0a0a0d', border: '1px solid rgba(255,255,255,0.08)',
+          position: 'relative', overflow: 'hidden',
         }}
       >
-        {/* Green fill */}
         <div style={{
-          position: 'absolute', left: 3, top: 3, bottom: 3,
-          width: `calc(${pct * 100}% - 6px)`, borderRadius: 8,
-          background: `linear-gradient(90deg, rgba(183,255,0,0.15), ${NEON_GREEN})`,
-          boxShadow: `0 0 10px ${NEON_GREEN}44`,
+          position: 'absolute', left: 2, top: 2, bottom: 2,
+          width: `calc(${pct * 100}% - 4px)`, borderRadius: 8,
+          background: `linear-gradient(90deg, rgba(201,168,76,0.2), ${ACCENT})`,
+          transition: dragging ? 'none' : 'width 0.15s ease',
         }} />
-        {/* Metallic handle */}
         <div style={{
-          position: 'absolute', left: `calc(${pct * 100}% - 12px)`, top: 1,
-          width: 24, height: 18, borderRadius: 9,
-          background: 'linear-gradient(180deg, #f0f0f0, #888, #444)',
-          boxShadow: '0 2px 6px rgba(0,0,0,0.8), 0 0 8px rgba(183,255,0,0.3)',
-          border: '1px solid #333',
+          position: 'absolute', left: `${pct * 100}%`, top: 2,
+          width: 20, height: 14, borderRadius: 7,
+          background: '#e8e8ea', boxShadow: '0 1px 4px rgba(0,0,0,0.5)',
+          transform: 'translateX(-50%)',
+          transition: dragging ? 'none' : 'left 0.15s ease',
         }} />
       </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#aaa' }}>
-        <span style={{ color: NEON_GREEN, fontWeight: 700 }}>{value}%</span>
-        <span style={{ fontSize: 9, color: '#555' }}>STEREO WIDTH</span>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span style={{ fontSize: 11, color: ACCENT, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
+          {value}%
+        </span>
+        <span style={{ fontSize: 9, color: '#5a5a5e', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+          Stereo Width
+        </span>
       </div>
     </div>
   );
-};
+}
